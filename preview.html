@@ -560,29 +560,44 @@ function renderExDash(){
 }
 
 /* ═══════════════════════════════════════════════
-   SCREEN: EXECUTION WIZARD (context-aware)
+   SCREEN: EXECUTION WIZARD (context-aware steps)
    ═══════════════════════════════════════════════ */
+function getWizSteps(){
+  const src=S.ctx.type;
+  if(src==='single'||src==='list'||src==='report'){
+    return [{key:'schedule',label:'Schedule'},{key:'intel',label:'Intelligence'}];
+  }
+  return [{key:'source',label:'Source'},{key:'schedule',label:'Schedule'},{key:'intel',label:'Intelligence'}];
+}
+
 function renderSchedule(){
   const j=D.journeys.find(x=>x.id===S.selJourney)||D.journeys[0];
   const ctx=S.ctx;
+  const steps=getWizSteps();
+  const maxStep=steps.length-1;
+  if(S.step>maxStep)S.step=maxStep;
+  const curKey=steps[S.step].key;
+
   let ctxBanner='';
   if(ctx.type==='single'){
-    ctxBanner=`<div class="alert-box ab-i" style="margin:0 0 .75rem"><strong>Single Contact:</strong> ${ctx.name} · This execution will target 1 contact.</div>`;
+    ctxBanner=`<div class="alert-box ab-i" style="margin:0 0 .75rem">👤 <strong>Single Contact:</strong> ${ctx.name} — This execution will target 1 contact.</div>`;
   }else if(ctx.type==='list'){
-    ctxBanner=`<div class="alert-box ab-i" style="margin:0 0 .75rem"><strong>Selected Contacts:</strong> ${ctx.count} contacts from manual selection.</div>`;
+    ctxBanner=`<div class="alert-box ab-i" style="margin:0 0 .75rem">👥 <strong>Selected Contacts:</strong> ${ctx.count} contacts from manual selection.</div>`;
   }else if(ctx.type==='report'){
-    ctxBanner=`<div class="alert-box ab-i" style="margin:0 0 .75rem"><strong>From Report:</strong> ${ctx.name} · ${ctx.count.toLocaleString()} contacts.</div>`;
+    ctxBanner=`<div class="alert-box ab-i" style="margin:0 0 .75rem">📊 <strong>From Report:</strong> ${ctx.name} — ${ctx.count.toLocaleString()} contacts.</div>`;
   }
+
+  const nextLabel=S.step<maxStep?(steps[S.step+1].key==='intel'?'Review Intelligence →':'Configure Schedule →'):'';
 
   return`<div class="bcrumb"><a onclick="go('exDash')">Exotel Home</a><span>›</span><span style="color:var(--txt)">Journey Execution</span></div>
   <div class="ph"><div class="ph-row"><div class="ph-icon" style="background:var(--ex);color:#fff;font-size:.75rem;font-weight:800;border-radius:6px">X</div><div><div class="ph-title">${j.name}</div><div class="ph-detail">Journey <span style="font-family:monospace;color:var(--ex);font-weight:600">${j.id}</span> · Configure and review before execution</div></div></div></div>
-  <div style="padding:.375rem 1.5rem;background:#fff;border-bottom:1px solid var(--bdr)"><div class="path" id="wizPath">${
-    ['Schedule','Source','Intelligence'].map((l,i)=>`<div class="path-i${i<S.step?' done':i===S.step?' cur':''}" onclick="S.step=${i};go('schedule')"><div class="path-n">${i<S.step?'✓':(i+1)}</div>${l}</div>`).join('')
+  <div style="padding:.375rem 1.5rem;background:#fff;border-bottom:1px solid var(--bdr)"><div class="path">${
+    steps.map((s,i)=>`<div class="path-i${i<S.step?' done':i===S.step?' cur':''}" onclick="S.step=${i};go('schedule')"><div class="path-n">${i<S.step?'✓':(i+1)}</div>${s.label}</div>`).join('')
   }</div></div>
-  <div class="cnt">${ctxBanner}${S.step===0?scheduleHTML():S.step===1?sourceHTML():intelHTML()}</div>
+  <div class="cnt">${ctxBanner}${curKey==='source'?sourceHTML():curKey==='schedule'?scheduleHTML():intelHTML()}</div>
   <div style="padding:.375rem 1.5rem .625rem;display:flex;justify-content:space-between">
     <button class="btn" onclick="${S.step===0?'go(\"exDash\")':'S.step--;go(\"schedule\")'}">${S.step===0?'← Cancel':'← Previous'}</button>
-    ${S.step<2?`<button class="btn btn-brand" onclick="S.step++;go('schedule')">${S.step===1?'Review Intelligence →':'Mark as Complete →'}</button>`:''}
+    ${S.step<maxStep?`<button class="btn btn-brand" onclick="S.step++;go('schedule')">${nextLabel}</button>`:''}
   </div>`;
 }
 
