@@ -1,0 +1,67 @@
+<template>
+    <div class="exec-root">
+        <!-- Header -->
+        <div class="exec-header">
+            <div class="exec-header-top">
+                <div>
+                    <h2 class="exec-title">Execute: Q2 Collections Campaign</h2>
+                    <p class="exec-subtitle">
+                        Journey ID: <span class="journey-id">BJ-2026-04-0847</span>
+                        <span class="divider">|</span>
+                        Configure scheduling, source, and review intelligence before execution
+                    </p>
+                </div>
+            </div>
+            <div class="step-bar">
+                <c-step-indicator steps={steps} current-step={currentStep}></c-step-indicator>
+            </div>
+        </div>
+
+        <!-- Step Content -->
+        <div class="exec-body">
+            <template lwc:if={isScheduleStep}>
+                <c-schedule-step
+                    execution-type={scheduleConfig.executionType}
+                    start-date={scheduleConfig.startDate}
+                    start-time={scheduleConfig.startTime}
+                    frequency={scheduleConfig.frequency}
+                    data-mode={scheduleConfig.dataMode}
+                    onschedulechange={handleScheduleChange}
+                ></c-schedule-step>
+            </template>
+            <template lwc:if={isSourceStep}>
+                <c-source-step
+                    ingestion-method={sourceConfig.ingestionMethod}
+                    onsourcechange={handleSourceChange}
+                ></c-source-step>
+            </template>
+            <template lwc:if={isSummaryStep}>
+                <c-intelligence-summary
+                    schedule-config={scheduleConfigJson}
+                    source-config={sourceConfigJson}
+                    onexecute={handleExecute}
+                    ondryrun={handleDryRun}
+                    oncancel={handleCancel}
+                ></c-intelligence-summary>
+            </template>
+        </div>
+
+        <!-- Footer -->
+        <div class="exec-footer">
+            <lightning-button
+                label={backLabel}
+                icon-name="utility:back"
+                onclick={handleBack}
+            ></lightning-button>
+            <template lwc:if={showNextButton}>
+                <lightning-button
+                    variant="brand"
+                    label="Next Step"
+                    icon-name="utility:forward"
+                    icon-position="right"
+                    onclick={handleNext}
+                ></lightning-button>
+            </template>
+        </div>
+    </div>
+</template>

@@ -1,0 +1,16 @@
+<template>
+    <div class="stat-card slds-card">
+        <div class="stat-card-body">
+            <div class="stat-content">
+                <p class="stat-label">{label}</p>
+                <p class="stat-value">{value}</p>
+                <template lwc:if={subtitle}>
+                    <p class="stat-subtitle">{subtitle}</p>
+                </template>
+            </div>
+            <div class={iconBoxClass}>
+                <lightning-icon icon-name={iconName} size="small"></lightning-icon>
+            </div>
+        </div>
+    </div>
+</template>

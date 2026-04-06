@@ -1,0 +1,129 @@
+<template>
+    <div class="step-root">
+        <!-- Execution Type -->
+        <div class="panel">
+            <div class="panel-header-row">
+                <div class="panel-icon-box"><lightning-icon icon-name="utility:date_time" size="x-small"></lightning-icon></div>
+                <div>
+                    <h3 class="panel-title">Execution Type</h3>
+                    <p class="panel-sub">Choose how this journey should be executed</p>
+                </div>
+            </div>
+            <div class="type-grid">
+                <div class={oneTimeClass} onclick={selectOneTime} role="button" tabindex="0">
+                    <div class="type-header">
+                        <div class={oneTimeIconClass}><lightning-icon icon-name="utility:event" size="x-small"></lightning-icon></div>
+                        <div>
+                            <p class="type-name">One-Time Execution</p>
+                            <p class="type-tag">For CRM batch uploads</p>
+                        </div>
+                    </div>
+                    <p class="type-desc">Define a specific start time. Execution ends upon natural completion of all contacts.</p>
+                </div>
+                <div class={recurringClass} onclick={selectRecurring} role="button" tabindex="0">
+                    <div class="type-header">
+                        <div class={recurringIconClass}><lightning-icon icon-name="utility:refresh" size="x-small"></lightning-icon></div>
+                        <div>
+                            <p class="type-name">Recurring Execution</p>
+                            <p class="type-tag">For ongoing CRM syncs</p>
+                        </div>
+                    </div>
+                    <p class="type-desc">Configure a cron-like schedule for continuous processing of CRM data.</p>
+                </div>
+            </div>
+            <div class="warning-box">
+                <lightning-icon icon-name="utility:info" size="x-small" class="warn-icon"></lightning-icon>
+                <p class="warn-text"><strong>Immediate execution is not allowed.</strong> All executions must be scheduled with a defined start time to ensure system stability and proper load distribution.</p>
+            </div>
+        </div>
+
+        <!-- Schedule Config -->
+        <div class="panel">
+            <div class="panel-header-row">
+                <div class="panel-icon-box"><lightning-icon icon-name="utility:clock" size="x-small"></lightning-icon></div>
+                <div>
+                    <h3 class="panel-title">Schedule Configuration</h3>
+                    <p class="panel-sub">Define when the execution should start</p>
+                </div>
+            </div>
+            <div class="slds-grid slds-gutters_small">
+                <div class="slds-col slds-size_1-of-2">
+                    <lightning-input type="date" label="Start Date" value={startDate} onchange={handleDateChange}></lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                    <lightning-input type="time" label="Start Time" value={startTime} onchange={handleTimeChange}></lightning-input>
+                </div>
+            </div>
+
+            <template lwc:if={isRecurring}>
+                <div class="freq-section">
+                    <p class="field-label">Frequency</p>
+                    <div class="freq-grid">
+                        <template for:each={frequencies} for:item="f">
+                            <div key={f.value} class={f.cssClass} onclick={handleFrequencyClick} data-value={f.value} role="button" tabindex="0">
+                                {f.label}
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <template lwc:if={isWeekly}>
+                    <div class="days-section">
+                        <p class="field-label">Select Days</p>
+                        <div class="days-grid">
+                            <template for:each={weekDays} for:item="d">
+                                <div key={d.index} class={d.cssClass} onclick={handleDayClick} data-index={d.index} role="button" tabindex="0">
+                                    {d.label}
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <template lwc:if={isCustom}>
+                    <div class="cron-section">
+                        <lightning-input label="Cron Expression" value={cronExpression} placeholder="e.g., 0 9 * * 1 (Every Monday at 9 AM)" onchange={handleCronChange}></lightning-input>
+                        <p class="cron-hint">Standard cron syntax: minute hour day-of-month month day-of-week</p>
+                    </div>
+                </template>
+            </template>
+        </div>
+
+        <!-- Data Mode (Recurring only) -->
+        <template lwc:if={isRecurring}>
+            <div class="panel">
+                <div class="panel-header-row">
+                    <div class="panel-icon-box"><lightning-icon icon-name="utility:database" size="x-small"></lightning-icon></div>
+                    <div>
+                        <h3 class="panel-title">Data Processing Mode</h3>
+                        <p class="panel-sub">How should CRM data be processed on each run?</p>
+                    </div>
+                </div>
+                <div class="type-grid">
+                    <div class={incrementalClass} onclick={selectIncremental} role="button" tabindex="0">
+                        <div class="type-header">
+                            <lightning-icon icon-name="utility:refresh" size="x-small" class={incrementalIconCls}></lightning-icon>
+                            <p class="type-name">Incremental Mode</p>
+                        </div>
+                        <p class="type-desc">Process only <strong>new data</strong> from CRM since last run. Ideal for collections and event-based triggers.</p>
+                        <div class="tag-row">
+                            <span class="tag tag-green">Recommended</span>
+                            <span class="tag tag-gray">Low resource</span>
+                        </div>
+                    </div>
+                    <div class={fullRerunClass} onclick={selectFullRerun} role="button" tabindex="0">
+                        <div class="type-header">
+                            <lightning-icon icon-name="utility:database" size="x-small" class={fullRerunIconCls}></lightning-icon>
+                            <p class="type-name">Full Re-run Mode</p>
+                        </div>
+                        <p class="type-desc">Reprocess the <strong>entire CRM dataset</strong> every run. Ideal for broad marketing campaigns.</p>
+                        <div class="tag-row">
+                            <span class="tag tag-amber">High resource</span>
+                            <span class="tag tag-gray">Complete coverage</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>

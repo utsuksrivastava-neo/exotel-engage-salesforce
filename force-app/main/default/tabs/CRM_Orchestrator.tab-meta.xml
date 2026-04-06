@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customObject>false</customObject>
+    <description>CRM Journey Orchestrator - Dashboard, Execution, and Monitoring</description>
+    <flexiPage>CRM_Orchestrator</flexiPage>
+    <label>CRM Orchestrator</label>
+    <motif>Custom85: Handshake</motif>
+</CustomTab>

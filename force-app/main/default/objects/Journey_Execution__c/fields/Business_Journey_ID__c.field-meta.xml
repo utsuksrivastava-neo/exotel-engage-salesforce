@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Business_Journey_ID__c</fullName>
+    <description>External Business Journey ID from the Journey Builder application</description>
+    <externalId>true</externalId>
+    <label>Business Journey ID</label>
+    <length>50</length>
+    <required>true</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

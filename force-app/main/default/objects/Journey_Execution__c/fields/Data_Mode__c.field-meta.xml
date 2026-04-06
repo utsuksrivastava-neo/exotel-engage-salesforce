@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Data_Mode__c</fullName>
+    <description>Incremental processes only new data; Full Re-run reprocesses entire dataset</description>
+    <label>Data Mode</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Incremental</fullName><default>true</default><label>Incremental</label></value>
+            <value><fullName>Full Re-run</fullName><default>false</default><label>Full Re-run</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

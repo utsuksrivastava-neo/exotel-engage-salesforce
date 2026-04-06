@@ -1,0 +1,197 @@
+<template>
+    <div class="summary-root">
+        <!-- Hero Banner -->
+        <div class="hero-banner">
+            <div class="hero-icon"><lightning-icon icon-name="utility:magicwand" size="small" variant="inverse"></lightning-icon></div>
+            <div>
+                <h3 class="hero-title">Pre-Execution Intelligence Summary</h3>
+                <p class="hero-sub">Review projections for safety, scale, and cost before executing. This is a mandatory gate.</p>
+            </div>
+        </div>
+
+        <div class="panels-grid">
+            <!-- Panel A: Audience Summary -->
+            <div class="panel">
+                <div class="panel-hdr"><div class="panel-icon-box"><lightning-icon icon-name="utility:groups" size="x-small"></lightning-icon></div><div><h3 class="panel-title">Panel A: Audience Summary</h3><p class="panel-sub">CRM data breakdown</p></div></div>
+                <div class="metric-grid">
+                    <div class="metric-box"><p class="metric-label">Total Records</p><p class="metric-value">{audienceTotalFormatted}</p></div>
+                    <div class="metric-box metric-green"><p class="metric-label-green">Valid Contacts</p><p class="metric-value-green">{audienceValidFormatted}</p></div>
+                    <div class="metric-box metric-red"><p class="metric-label-red">Invalid Contacts</p><p class="metric-value-red">{audienceInvalidFormatted}</p></div>
+                    <div class="metric-box metric-amber"><p class="metric-label-amber">Deduplicated</p><p class="metric-value-amber">{audienceDedupFormatted}</p></div>
+                </div>
+                <div class="skipped-box"><p class="skipped-label">Skipped (Already in active journey)</p><p class="skipped-value">{audienceSkippedFormatted}</p></div>
+                <div class="channel-bars">
+                    <p class="section-label">Channel-wise Availability</p>
+                    <template for:each={channelBars} for:item="bar">
+                        <div key={bar.channel} class="channel-bar-row">
+                            <c-channel-icon channel={bar.channel} size="small" show-label></c-channel-icon>
+                            <div class="bar-content">
+                                <div class="bar-header"><span class="bar-label">{bar.channel}</span><span class="bar-value">{bar.formatted}</span></div>
+                                <div class="bar-track"><div class="bar-fill" style={bar.style}></div></div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Panel B: Journey Explosion -->
+            <div class="panel">
+                <div class="panel-hdr"><div class="panel-icon-box"><lightning-icon icon-name="utility:magicwand" size="x-small"></lightning-icon></div><div><h3 class="panel-title">Panel B: Journey Explosion</h3><p class="panel-sub">Computed total actions across all channels</p></div></div>
+                <div class="explosion-hero">
+                    <p class="explosion-label">Grand Total Actions</p>
+                    <p class="explosion-value">{totalActionsFormatted}</p>
+                    <p class="explosion-sub">From {audienceValidFormatted} CRM contacts entering journey</p>
+                </div>
+                <div class="explosion-channels">
+                    <template for:each={channelActions} for:item="ca">
+                        <div key={ca.channel} class="explosion-row">
+                            <c-channel-icon channel={ca.channel} size="medium"></c-channel-icon>
+                            <div class="explosion-info"><p class="explosion-ch-label">{ca.channel} Messages</p><p class="explosion-ch-value">{ca.formatted}</p></div>
+                            <span class="explosion-pct">{ca.percent}%</span>
+                        </div>
+                    </template>
+                </div>
+                <div class="fallback-section">
+                    <p class="section-label">Fallback Chains</p>
+                    <div class="fallback-row">
+                        <c-channel-badge variant="WhatsApp" text="WhatsApp"></c-channel-badge>
+                        <span class="fallback-arrow">&rarr;</span>
+                        <c-channel-badge variant="SMS" text="SMS"></c-channel-badge>
+                        <span class="fallback-count">43,400</span>
+                    </div>
+                    <div class="fallback-row">
+                        <c-channel-badge variant="SMS" text="SMS"></c-channel-badge>
+                        <span class="fallback-arrow">&rarr;</span>
+                        <c-channel-badge variant="Call" text="Call"></c-channel-badge>
+                        <span class="fallback-count">21,700</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel C: System Load -->
+            <div class="panel">
+                <div class="panel-hdr"><div class="panel-icon-box"><lightning-icon icon-name="utility:metrics" size="x-small"></lightning-icon></div><div><h3 class="panel-title">Panel C: System Load Estimation</h3><p class="panel-sub">Required vs. available capacity</p></div></div>
+                <table class="load-table">
+                    <thead><tr><th class="th-left">Channel</th><th class="th-right">Required TPS</th><th class="th-right">Capacity TPS</th><th class="th-center">Status</th></tr></thead>
+                    <tbody>
+                        <template for:each={systemLoad} for:item="load">
+                            <tr key={load.channel}>
+                                <td><c-channel-icon channel={load.channel} size="small" show-label></c-channel-icon></td>
+                                <td class="td-right">{load.required}</td>
+                                <td class="td-right">{load.capacity}</td>
+                                <td class="td-center"><c-channel-badge variant={load.badgeVariant} text={load.statusLabel} show-dot></c-channel-badge></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+                <template lwc:if={hasOverload}>
+                    <div class="overload-box">
+                        <lightning-icon icon-name="utility:warning" size="x-small" class="overload-icon"></lightning-icon>
+                        <div><p class="overload-title">Capacity Overload Detected</p><p class="overload-desc">Call channel exceeds capacity. Consider reducing throttle or increasing call infrastructure.</p></div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Panel D: Timeline Simulation -->
+            <div class="panel">
+                <div class="panel-hdr"><div class="panel-icon-box"><lightning-icon icon-name="utility:clock" size="x-small"></lightning-icon></div><div><h3 class="panel-title">Panel D: Timeline Simulation</h3><p class="panel-sub">Time-based distribution &amp; predicted load spikes</p></div></div>
+                <div class="chart-container"><canvas lwc:ref="timelineChart"></canvas></div>
+                <div class="spike-list">
+                    <template for:each={spikes} for:item="spike">
+                        <div key={spike.time} class="spike-row">
+                            <lightning-icon icon-name="utility:clock" size="xx-small" class="spike-icon"></lightning-icon>
+                            <span class="spike-time">{spike.time}</span>
+                            <span class="spike-action">&rarr; {spike.action}</span>
+                            <span class="spike-volume">{spike.volume}</span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Panel E: Cost Estimation -->
+            <div class="panel">
+                <div class="panel-hdr"><div class="panel-icon-box panel-icon-green"><lightning-icon icon-name="utility:moneybag" size="x-small"></lightning-icon></div><div><h3 class="panel-title">Panel E: Cost Estimation</h3><p class="panel-sub">Pure pass-through pricing (no markup)</p></div></div>
+                <div class="cost-hero">
+                    <p class="cost-label">Total Estimated Cost</p>
+                    <p class="cost-value">&#8377;{grandTotalFormatted}</p>
+                    <p class="cost-sub">Based on current assumptions and channel volumes</p>
+                </div>
+                <table class="cost-table">
+                    <thead><tr><th class="th-left">Channel</th><th class="th-right">Unit Cost</th><th class="th-right">Volume</th><th class="th-right">Total</th></tr></thead>
+                    <tbody>
+                        <template for:each={costLines} for:item="cost">
+                            <tr key={cost.channel}>
+                                <td><c-channel-icon channel={cost.channel} size="small" show-label></c-channel-icon></td>
+                                <td class="td-right">&#8377;{cost.unitCost}</td>
+                                <td class="td-right">{cost.volumeFormatted}</td>
+                                <td class="td-right td-bold">&#8377;{cost.totalFormatted}</td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Panel F: Assumption Engine -->
+            <div class="panel">
+                <div class="panel-hdr"><div class="panel-icon-box"><lightning-icon icon-name="utility:slider" size="x-small"></lightning-icon></div><div><h3 class="panel-title">Panel F: Assumption Engine</h3><p class="panel-sub">View and edit estimation assumptions</p></div></div>
+                <div class="assumption-list">
+                    <template for:each={assumptions} for:item="a">
+                        <div key={a.label} class="assumption-row">
+                            <div class="assumption-header"><p class="assumption-label">{a.label}</p><c-channel-badge variant="default" text={a.lastRunText}></c-channel-badge></div>
+                            <div class="slider-row">
+                                <input type="range" min="0" max="100" value={a.currentValue} class="range-input" data-index={a.index} onchange={handleAssumptionChange} />
+                                <span class="slider-value">{a.currentValue}{a.unit}</span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel G: Execution Controls -->
+        <div class="panel panel-wide">
+            <div class="panel-hdr"><div class="panel-icon-box"><lightning-icon icon-name="utility:slider" size="x-small"></lightning-icon></div><div><h3 class="panel-title">Panel G: Execution Controls</h3><p class="panel-sub">Fine-tune execution timing and speed</p></div></div>
+            <div class="controls-grid">
+                <div>
+                    <p class="section-label">Scheduled Start Time</p>
+                    <div class="slds-grid slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input type="date" label="Date" value={execDate} onchange={handleExecDateChange}></lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input type="time" label="Time" value={execTime} onchange={handleExecTimeChange}></lightning-input>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <p class="section-label">Throttling Control</p>
+                    <div class="throttle-box">
+                        <div class="throttle-header"><span class="throttle-label">Execution Speed</span><span class="throttle-value">{throttle}%</span></div>
+                        <input type="range" min="10" max="100" step="5" value={throttle} class="range-input" onchange={handleThrottleChange} />
+                        <div class="throttle-footer"><span>10% (Slow)</span><span>100% (Max)</span></div>
+                        <template lwc:if={showSpreadMessage}>
+                            <p class="spread-msg">Execution will be spread over {spreadHours} hours to prevent instant blasts</p>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel H: Action Footer -->
+        <div class="action-footer">
+            <div class="footer-info">
+                <p class="footer-title">Ready to execute?</p>
+                <p class="footer-meta">{audienceValidFormatted} contacts &middot; {totalActionsFormatted} total actions &middot; &#8377;{grandTotalFormatted} estimated cost</p>
+            </div>
+            <div class="footer-buttons">
+                <lightning-button label="Cancel" icon-name="utility:close" onclick={handleCancel}></lightning-button>
+                <lightning-button label="Dry Run" icon-name="utility:preview" class="dry-run-btn" onclick={handleDryRun}></lightning-button>
+                <lightning-button variant="success" label="Execute" icon-name="utility:play" onclick={handleExecute}></lightning-button>
+            </div>
+        </div>
+    </div>
+
+    <template lwc:if={showDryRunModal}>
+        <c-dry-run-modal onclose={closeDryRun}></c-dry-run-modal>
+    </template>
+</template>

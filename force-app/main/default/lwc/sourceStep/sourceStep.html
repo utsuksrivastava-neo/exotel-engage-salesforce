@@ -1,0 +1,116 @@
+<template>
+    <div class="step-root">
+        <!-- Input Source -->
+        <div class="panel">
+            <div class="panel-header-row">
+                <div class="panel-icon-box"><lightning-icon icon-name="utility:database" size="x-small"></lightning-icon></div>
+                <div>
+                    <h3 class="panel-title">Input Source</h3>
+                    <p class="panel-sub">Select the data source for this execution</p>
+                </div>
+            </div>
+            <div class="type-grid">
+                <div class="type-card type-card-active">
+                    <div class="type-header">
+                        <div class="type-icon-box type-icon-active"><lightning-icon icon-name="utility:database" size="x-small"></lightning-icon></div>
+                        <div>
+                            <p class="type-name">CRM (Salesforce)</p>
+                            <p class="type-selected">Selected</p>
+                        </div>
+                    </div>
+                    <p class="type-desc">Pull audience data directly from your connected Salesforce CRM instance.</p>
+                </div>
+                <div class="type-card type-card-disabled">
+                    <div class="lock-icon"><lightning-icon icon-name="utility:lock" size="x-small"></lightning-icon></div>
+                    <div class="type-header">
+                        <div class="type-icon-box"><lightning-icon icon-name="utility:file" size="x-small"></lightning-icon></div>
+                        <div>
+                            <p class="type-name-disabled">Excel Upload</p>
+                            <p class="type-tag">Unavailable</p>
+                        </div>
+                    </div>
+                    <p class="type-desc-muted">Cannot combine with CRM source in the same execution.</p>
+                </div>
+            </div>
+            <div class="info-box">
+                <lightning-icon icon-name="utility:info" size="x-small" class="info-icon"></lightning-icon>
+                <p class="info-text"><strong>Single source constraint:</strong> Only one input source is allowed per execution. CRM and Excel uploads cannot be combined in the same run.</p>
+            </div>
+        </div>
+
+        <!-- Ingestion Configuration -->
+        <div class="panel">
+            <div class="panel-header-row">
+                <div class="panel-icon-box"><lightning-icon icon-name="utility:layers" size="x-small"></lightning-icon></div>
+                <div>
+                    <h3 class="panel-title">Ingestion Configuration</h3>
+                    <p class="panel-sub">Choose how CRM data is pulled</p>
+                </div>
+            </div>
+            <div class="type-grid">
+                <div class={realtimeClass} onclick={selectRealtime} role="button" tabindex="0">
+                    <div class="type-header">
+                        <lightning-icon icon-name="utility:connected_apps" size="x-small" class={realtimeIconCls}></lightning-icon>
+                        <p class="type-name">Real-time Trigger</p>
+                    </div>
+                    <p class="type-desc">Event-based triggers pulling individual updates as they occur in the CRM.</p>
+                    <div class="tag-row"><span class="tag tag-amber">Event-driven</span></div>
+                </div>
+                <div class={batchClass} onclick={selectBatch} role="button" tabindex="0">
+                    <div class="type-header">
+                        <lightning-icon icon-name="utility:layers" size="x-small" class={batchIconCls}></lightning-icon>
+                        <p class="type-name">Batch Ingestion</p>
+                    </div>
+                    <p class="type-desc">Bulk data transfers from CRM at scheduled intervals for high-volume processing.</p>
+                    <div class="tag-row"><span class="tag tag-violet">High throughput</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Safeguards -->
+        <div class="panel">
+            <div class="panel-header-row">
+                <div class="panel-icon-box panel-icon-green"><lightning-icon icon-name="utility:shield" size="x-small"></lightning-icon></div>
+                <div>
+                    <h3 class="panel-title">Data Safeguards</h3>
+                    <p class="panel-sub">Automatic protections applied to this execution</p>
+                </div>
+            </div>
+            <div class="safeguard-list">
+                <div class="safeguard-row">
+                    <div class="safeguard-icon"><lightning-icon icon-name="utility:shield" size="x-small"></lightning-icon></div>
+                    <div class="safeguard-info">
+                        <div class="safeguard-name-row">
+                            <p class="safeguard-name">Queue Buffering</p>
+                            <span class="mandatory-tag">MANDATORY</span>
+                        </div>
+                        <p class="safeguard-desc">Automatic buffer to handle sudden CRM data spikes and protect system stability</p>
+                    </div>
+                    <div class="toggle-on"><div class="toggle-knob"></div></div>
+                </div>
+                <div class="safeguard-row">
+                    <div class="safeguard-icon"><lightning-icon icon-name="utility:check" size="x-small"></lightning-icon></div>
+                    <div class="safeguard-info">
+                        <div class="safeguard-name-row">
+                            <p class="safeguard-name">Auto-Deduplication</p>
+                            <span class="mandatory-tag">MANDATORY</span>
+                        </div>
+                        <p class="safeguard-desc">Automatically removes duplicate contacts from the CRM data feed</p>
+                    </div>
+                    <div class="toggle-on"><div class="toggle-knob"></div></div>
+                </div>
+                <div class="safeguard-row">
+                    <div class="safeguard-icon"><lightning-icon icon-name="utility:shield" size="x-small"></lightning-icon></div>
+                    <div class="safeguard-info">
+                        <div class="safeguard-name-row">
+                            <p class="safeguard-name">Skip Active Journey Contacts</p>
+                            <span class="mandatory-tag">MANDATORY</span>
+                        </div>
+                        <p class="safeguard-desc">Contacts already in an active journey are automatically excluded</p>
+                    </div>
+                    <div class="toggle-on"><div class="toggle-knob"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

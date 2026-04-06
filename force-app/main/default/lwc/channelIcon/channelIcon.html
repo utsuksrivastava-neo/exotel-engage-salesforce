@@ -1,0 +1,10 @@
+<template>
+    <div class={wrapperClass}>
+        <div class={iconBoxClass}>
+            <lightning-icon icon-name={iconName} size="x-small" class={iconColorClass}></lightning-icon>
+        </div>
+        <template lwc:if={showLabel}>
+            <span class="icon-label">{channelLabel}</span>
+        </template>
+    </div>
+</template>

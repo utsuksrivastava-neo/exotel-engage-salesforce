@@ -1,0 +1,46 @@
+.step-root { max-width: 48rem; margin: 0 auto; display: flex; flex-direction: column; gap: 1.25rem; }
+.panel { background: #fff; border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 1.25rem; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.panel-header-row { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1rem; }
+.panel-icon-box { width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; background: #eff6ff; display: flex; align-items: center; justify-content: center; --sds-c-icon-color-foreground-default: #2563eb; flex-shrink: 0; }
+.panel-icon-green { background: #f0fdf4; --sds-c-icon-color-foreground-default: #16a34a; }
+.panel-title { font-size: 0.875rem; font-weight: 600; color: #0f172a; margin: 0; }
+.panel-sub { font-size: 0.75rem; color: #64748b; margin: 0.125rem 0 0; }
+
+.type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.type-card { padding: 1rem; border-radius: 0.75rem; border: 2px solid #e2e8f0; cursor: pointer; transition: all 0.15s; position: relative; }
+.type-card:hover { border-color: #cbd5e1; }
+.type-card-active { border-color: #60a5fa; background: rgba(59,130,246,0.04); box-shadow: 0 0 0 2px #dbeafe; }
+.type-card-disabled { opacity: 0.5; cursor: not-allowed; }
+.lock-icon { position: absolute; top: 0.75rem; right: 0.75rem; --sds-c-icon-color-foreground-default: #cbd5e1; }
+.type-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+.type-icon-box { width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; background: #f1f5f9; display: flex; align-items: center; justify-content: center; --sds-c-icon-color-foreground-default: #94a3b8; }
+.type-icon-active { background: #dbeafe; --sds-c-icon-color-foreground-default: #2563eb; }
+.type-name { font-size: 0.8125rem; font-weight: 600; color: #1e293b; margin: 0; }
+.type-name-disabled { font-size: 0.8125rem; font-weight: 600; color: #64748b; margin: 0; }
+.type-selected { font-size: 0.6875rem; color: #2563eb; font-weight: 500; margin: 0; }
+.type-tag { font-size: 0.6875rem; color: #94a3b8; margin: 0; }
+.type-desc { font-size: 0.6875rem; color: #64748b; line-height: 1.5; margin: 0; }
+.type-desc-muted { font-size: 0.6875rem; color: #94a3b8; line-height: 1.5; margin: 0; }
+.icon-active { --sds-c-icon-color-foreground-default: #2563eb; }
+.icon-muted { --sds-c-icon-color-foreground-default: #94a3b8; }
+
+.info-box { margin-top: 0.75rem; padding: 0.75rem; border-radius: 0.5rem; background: #eff6ff; border: 1px solid #bfdbfe; display: flex; align-items: flex-start; gap: 0.5rem; }
+.info-icon { --sds-c-icon-color-foreground-default: #2563eb; flex-shrink: 0; }
+.info-text { font-size: 0.6875rem; color: #1e40af; line-height: 1.5; margin: 0; }
+
+.tag-row { display: flex; gap: 0.375rem; margin-top: 0.5rem; }
+.tag { padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.625rem; font-weight: 600; }
+.tag-amber { background: #fffbeb; color: #b45309; }
+.tag-violet { background: #f5f3ff; color: #6d28d9; }
+
+/* Safeguards */
+.safeguard-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.safeguard-row { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border-radius: 0.5rem; background: #f8fafc; border: 1px solid #f1f5f9; }
+.safeguard-icon { width: 2rem; height: 2rem; border-radius: 0.5rem; background: #f0fdf4; display: flex; align-items: center; justify-content: center; flex-shrink: 0; --sds-c-icon-color-foreground-default: #16a34a; }
+.safeguard-info { flex: 1; }
+.safeguard-name-row { display: flex; align-items: center; gap: 0.5rem; }
+.safeguard-name { font-size: 0.8125rem; font-weight: 600; color: #1e293b; margin: 0; }
+.mandatory-tag { padding: 0.0625rem 0.375rem; background: #f0fdf4; color: #15803d; font-size: 0.5625rem; font-weight: 700; border-radius: 0.25rem; text-transform: uppercase; }
+.safeguard-desc { font-size: 0.6875rem; color: #64748b; margin: 0.125rem 0 0; }
+.toggle-on { width: 2.5rem; height: 1.25rem; background: #22c55e; border-radius: 9999px; position: relative; flex-shrink: 0; margin-top: 0.25rem; }
+.toggle-knob { position: absolute; right: 0.125rem; top: 0.125rem; width: 1rem; height: 1rem; background: #fff; border-radius: 9999px; box-shadow: 0 1px 2px rgba(0,0,0,.1); }

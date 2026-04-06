@@ -1,0 +1,107 @@
+<template>
+    <section class="modal-backdrop" onclick={handleBackdropClick}>
+        <div class="modal-container" onclick={stopPropagation}>
+            <!-- Header -->
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <div class="modal-icon"><lightning-icon icon-name="utility:preview" size="small" variant="inverse"></lightning-icon></div>
+                    <div>
+                        <h3 class="modal-title">Dry Run Simulation</h3>
+                        <p class="modal-subtitle">No actual messages will be sent</p>
+                    </div>
+                </div>
+                <button class="close-btn" onclick={handleClose}><lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+                <template lwc:if={isSimulating}>
+                    <div class="sim-container">
+                        <div class="spinner-wrap"><lightning-spinner alternative-text="Simulating" size="large"></lightning-spinner></div>
+                        <p class="sim-title">Simulating Journey Execution...</p>
+                        <p class="sim-sub">Processing 108,500 contacts</p>
+                        <div class="progress-container">
+                            <div class="progress-header"><span class="progress-label">Progress</span><span class="progress-pct">{progress}%</span></div>
+                            <div class="progress-track"><div class="progress-bar" style={progressStyle}></div></div>
+                        </div>
+                    </div>
+                </template>
+
+                <template lwc:if={isComplete}>
+                    <!-- Success Banner -->
+                    <div class="success-banner">
+                        <lightning-icon icon-name="utility:success" size="small" class="success-icon"></lightning-icon>
+                        <div><p class="success-title">Dry Run Complete</p><p class="success-sub">Simulation finished successfully. No messages were sent.</p></div>
+                    </div>
+
+                    <!-- Simulated Actions -->
+                    <div class="result-section">
+                        <div class="result-header"><lightning-icon icon-name="utility:magicwand" size="xx-small"></lightning-icon><h4 class="result-title">Simulated Action Counts</h4></div>
+                        <div class="action-grid">
+                            <div class="action-card"><c-channel-icon channel="WhatsApp" size="small"></c-channel-icon><p class="action-val">86,800</p><p class="action-ch">WhatsApp</p></div>
+                            <div class="action-card"><c-channel-icon channel="SMS" size="small"></c-channel-icon><p class="action-val">43,400</p><p class="action-ch">SMS</p></div>
+                            <div class="action-card"><c-channel-icon channel="Call" size="small"></c-channel-icon><p class="action-val">21,700</p><p class="action-ch">Call</p></div>
+                        </div>
+                        <div class="total-card"><p class="total-label">Total Simulated Actions</p><p class="total-value">152,000</p></div>
+                    </div>
+
+                    <!-- System Load -->
+                    <div class="result-section">
+                        <div class="result-header"><lightning-icon icon-name="utility:metrics" size="xx-small"></lightning-icon><h4 class="result-title">Expected System Load</h4></div>
+                        <div class="load-list">
+                            <div class="load-row">
+                                <c-channel-icon channel="WhatsApp" size="small" show-label></c-channel-icon>
+                                <div class="load-bar-wrap"><div class="load-track"><div class="load-fill load-fill-ok" style="width:72.5%"></div></div></div>
+                                <span class="load-tps">145/200 TPS</span>
+                                <lightning-icon icon-name="utility:success" size="xx-small" class="load-ok"></lightning-icon>
+                            </div>
+                            <div class="load-row">
+                                <c-channel-icon channel="SMS" size="small" show-label></c-channel-icon>
+                                <div class="load-bar-wrap"><div class="load-track"><div class="load-fill load-fill-ok" style="width:48%"></div></div></div>
+                                <span class="load-tps">72/150 TPS</span>
+                                <lightning-icon icon-name="utility:success" size="xx-small" class="load-ok"></lightning-icon>
+                            </div>
+                            <div class="load-row">
+                                <c-channel-icon channel="Call" size="small" show-label></c-channel-icon>
+                                <div class="load-bar-wrap"><div class="load-track"><div class="load-fill load-fill-over" style="width:100%"></div></div></div>
+                                <span class="load-tps">38/30 TPS</span>
+                                <lightning-icon icon-name="utility:warning" size="xx-small" class="load-warn"></lightning-icon>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div class="result-section">
+                        <div class="result-header"><lightning-icon icon-name="utility:clock" size="xx-small"></lightning-icon><h4 class="result-title">Estimated Timeline</h4></div>
+                        <div class="timeline-grid">
+                            <div class="timeline-card"><p class="tl-label">WhatsApp Phase</p><p class="tl-value">0-30 min</p></div>
+                            <div class="timeline-card"><p class="tl-label">SMS Fallback</p><p class="tl-value">+2 hrs</p></div>
+                            <div class="timeline-card"><p class="tl-label">Call Trigger</p><p class="tl-value">+4 hrs</p></div>
+                        </div>
+                    </div>
+
+                    <!-- Cost -->
+                    <div class="result-section">
+                        <div class="result-header"><lightning-icon icon-name="utility:moneybag" size="xx-small"></lightning-icon><h4 class="result-title">Estimated Cost</h4></div>
+                        <div class="cost-row">
+                            <div class="cost-badges">
+                                <c-channel-badge variant="WhatsApp" text="WhatsApp: ₹39,060"></c-channel-badge>
+                                <c-channel-badge variant="SMS" text="SMS: ₹5,208"></c-channel-badge>
+                                <c-channel-badge variant="Call" text="Call: ₹26,040"></c-channel-badge>
+                            </div>
+                            <div class="cost-total"><p class="cost-total-label">Total</p><p class="cost-total-value">₹70,308</p></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer">
+                <lightning-button label="Close" onclick={handleClose}></lightning-button>
+                <template lwc:if={isComplete}>
+                    <lightning-button variant="brand" label="Proceed to Execute" onclick={handleProceed}></lightning-button>
+                </template>
+            </div>
+        </div>
+    </section>
+</template>

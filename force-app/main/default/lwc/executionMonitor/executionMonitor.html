@@ -1,0 +1,135 @@
+<template>
+    <div class="monitor-root">
+        <!-- Header -->
+        <div class="monitor-header">
+            <div>
+                <div class="title-row">
+                    <h2 class="monitor-title">Live Execution Monitor</h2>
+                    <c-channel-badge variant={statusBadgeVariant} text={statusLabel} show-dot></c-channel-badge>
+                </div>
+                <p class="monitor-sub">Q2 Collections Campaign &middot; Started {elapsedMinutes} min ago &middot; Elapsed: {elapsedFormatted}</p>
+            </div>
+            <lightning-button
+                variant={pauseButtonVariant}
+                label={pauseButtonLabel}
+                icon-name={pauseButtonIcon}
+                onclick={togglePause}
+            ></lightning-button>
+        </div>
+
+        <!-- Alerts -->
+        <div class="alerts">
+            <template for:each={alerts} for:item="alert">
+                <div key={alert.alertId} class={alert.cssClass}>
+                    <lightning-icon icon-name={alert.iconName} size="x-small" class={alert.iconClass}></lightning-icon>
+                    <span class={alert.textClass}>{alert.message}</span>
+                    <span class="alert-time">{alert.timeAgo}</span>
+                </div>
+            </template>
+        </div>
+
+        <!-- Stat Cards -->
+        <div class="slds-grid slds-wrap slds-gutters_small stat-row">
+            <div class="slds-col slds-size_1-of-5">
+                <c-stat-card label="Processed" value={processedFormatted} subtitle={processedSub} icon-name="utility:groups" variant="default"></c-stat-card>
+            </div>
+            <div class="slds-col slds-size_1-of-5">
+                <c-stat-card label="Progress" value={progressPercent} icon-name="utility:trending" variant="success"></c-stat-card>
+            </div>
+            <div class="slds-col slds-size_1-of-5">
+                <c-stat-card label="Success Rate" value={successRateFormatted} icon-name="utility:success" variant="success"></c-stat-card>
+            </div>
+            <div class="slds-col slds-size_1-of-5">
+                <c-stat-card label="Failure Rate" value={failureRateFormatted} icon-name="utility:error" variant="error"></c-stat-card>
+            </div>
+            <div class="slds-col slds-size_1-of-5">
+                <c-stat-card label="Current TPS" value={tpsSummary} icon-name="utility:metrics" variant="purple"></c-stat-card>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="slds-grid slds-gutters_small charts-row">
+            <div class="slds-col slds-size_2-of-3">
+                <div class="panel">
+                    <div class="panel-hdr">
+                        <div class="panel-hdr-left"><div class="panel-icon-box"><lightning-icon icon-name="utility:activity" size="x-small"></lightning-icon></div><div><h3 class="panel-title">Real-time TPS / CPS</h3><p class="panel-sub">Transactions per second across channels</p></div></div>
+                        <div class="live-dot"><span class="pulse-dot"></span><span class="live-text">Live</span></div>
+                    </div>
+                    <div class="chart-area"><canvas lwc:ref="tpsChart"></canvas></div>
+                </div>
+            </div>
+            <div class="slds-col slds-size_1-of-3">
+                <div class="panel">
+                    <div class="panel-hdr">
+                        <div class="panel-hdr-left"><div class="panel-icon-box"><lightning-icon icon-name="utility:magicwand" size="x-small"></lightning-icon></div><div><h3 class="panel-title">Channel Distribution</h3><p class="panel-sub">Messages sent per channel</p></div></div>
+                    </div>
+                    <div class="chart-pie"><canvas lwc:ref="pieChart"></canvas></div>
+                    <div class="channel-summary">
+                        <template for:each={channelSummaryRows} for:item="ch">
+                            <div key={ch.channel} class="ch-row">
+                                <c-channel-icon channel={ch.channel} size="small"></c-channel-icon>
+                                <div class="ch-info">
+                                    <div class="ch-header"><span class="ch-name">{ch.channel}</span><span class="ch-sent">{ch.sentFormatted}</span></div>
+                                    <div class="ch-badges">
+                                        <c-channel-badge variant="success" text={ch.deliveredText}></c-channel-badge>
+                                        <template lwc:if={ch.hasReplied}><c-channel-badge variant="info" text={ch.repliedText}></c-channel-badge></template>
+                                        <c-channel-badge variant="error" text={ch.failedText}></c-channel-badge>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Timeline -->
+        <div class="panel">
+            <div class="panel-hdr">
+                <div class="panel-hdr-left"><div class="panel-icon-box"><lightning-icon icon-name="utility:clock" size="x-small"></lightning-icon></div><div><h3 class="panel-title">Per-Contact Timeline</h3><p class="panel-sub">Track individual CRM contacts through their journey states</p></div></div>
+                <div class="search-box">
+                    <lightning-input type="search" placeholder="Search contacts..." value={searchTerm} onchange={handleSearch}></lightning-input>
+                </div>
+            </div>
+            <div class="contact-list">
+                <template for:each={contactRows} for:item="contact">
+                    <div key={contact.contactId} class="contact-item">
+                        <div class="contact-header" onclick={toggleContact} data-id={contact.contactId}>
+                            <lightning-icon icon-name={contact.chevronIcon} size="xx-small" class="chevron"></lightning-icon>
+                            <div class="contact-avatar">{contact.initials}</div>
+                            <div class="contact-info">
+                                <div class="contact-name-row"><span class="contact-name">{contact.name}</span><span class="contact-id">{contact.contactId}</span></div>
+                                <span class="contact-phone">{contact.phone}</span>
+                            </div>
+                            <div class="state-dots">
+                                <template for:each={contact.stateDots} for:item="dot">
+                                    <span key={dot.key} class={dot.cssClass}></span>
+                                </template>
+                            </div>
+                            <c-channel-badge variant={contact.lastBadgeVariant} text={contact.lastState}></c-channel-badge>
+                        </div>
+                        <template lwc:if={contact.isExpanded}>
+                            <div class="contact-timeline">
+                                <div class="timeline-line">
+                                    <template for:each={contact.states} for:item="state">
+                                        <div key={state.key} class="timeline-entry">
+                                            <div class={state.dotClass}></div>
+                                            <div class="timeline-content">
+                                                <div class="timeline-row">
+                                                    <c-channel-icon channel={state.channel} size="small"></c-channel-icon>
+                                                    <span class="timeline-state">{state.state}</span>
+                                                    <c-channel-badge variant={state.badgeVariant} text={state.status}></c-channel-badge>
+                                                </div>
+                                                <p class="timeline-time">{state.formattedTime}</p>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</template>

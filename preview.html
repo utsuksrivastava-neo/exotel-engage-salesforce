@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Exotel Engage — Salesforce Plugin Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --brand:#0070d2;--brand-dk:#005fb2;--destruct:#c23934;--success:#2e844a;--warn:#fe9339;--err:#ea001e;
+  --bdr:#dddbda;--bdr-lt:#e5e5e5;--bg:#f3f3f3;--bg-inv:#032d60;--white:#fff;
+  --txt:#181818;--txt2:#706e6b;--r:.25rem;--sh:0 2px 2px 0 rgba(0,0,0,.1);
+  --ex:#5C2D91;--ex-lt:#7B3FA0;--ex-bg:#f3eef8;
+  --ff:-apple-system,'Salesforce Sans',Helvetica,Arial,sans-serif;
+}
+body{font-family:var(--ff);background:var(--bg);color:var(--txt);overflow:hidden;height:100vh;font-size:13px;line-height:1.5}
+a{color:var(--brand);text-decoration:none;cursor:pointer}a:hover{text-decoration:underline}
+
+/* ═══ SF CHROME ═══ */
+.chrome{display:flex;flex-direction:column;height:100vh}
+.gh{height:44px;background:var(--bg-inv);display:flex;align-items:center;padding:0 1rem;gap:.5rem;flex-shrink:0}
+.waffle{width:28px;height:28px;display:grid;grid-template-columns:repeat(3,6px);gap:2px;padding:3px;cursor:pointer;border-radius:4px}.waffle:hover{background:rgba(255,255,255,.15)}.wd{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.7)}
+.gh-logo{color:#fff;font-size:.8125rem;font-weight:700;margin-left:.25rem}
+.gh-search{flex:1;max-width:30rem;margin:0 1.25rem}
+.gh-search input{width:100%;padding:6px 12px 6px 32px;border-radius:4px;border:none;font-size:.75rem;background:rgba(255,255,255,.16) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='rgba(255,255,255,0.5)' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 10-1.397 1.398h-.001l3.85 3.85a1 1 0 001.415-1.414l-3.85-3.85zm-5.44 1.354a5.5 5.5 0 110-11 5.5 5.5 0 010 11z'/%3E%3C/svg%3E") 10px center/14px no-repeat;color:#fff;outline:none}
+.gh-search input::placeholder{color:rgba(255,255,255,.5)}.gh-search input:focus{background-color:rgba(255,255,255,.25)}
+.gh-r{display:flex;align-items:center;gap:.75rem;margin-left:auto}
+.gh-ic{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;color:rgba(255,255,255,.7);font-size:.875rem}.gh-ic:hover{background:rgba(255,255,255,.12);color:#fff}
+.av{width:28px;height:28px;border-radius:50%;background:#5c8fbe;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.5625rem;font-weight:700;cursor:pointer}
+
+.nav{height:40px;background:#1b2c52;display:flex;align-items:stretch;padding:0 .75rem;flex-shrink:0}
+.nav-brand{display:flex;align-items:center;gap:.5rem;padding-right:.75rem;border-right:1px solid rgba(255,255,255,.15);margin-right:.25rem}
+.nav-logo{width:20px;height:20px;background:var(--ex);border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.6rem;font-weight:800}
+.nav-name{color:#fff;font-size:.8125rem;font-weight:600}
+.tab{padding:0 .75rem;font-size:.7rem;color:rgba(255,255,255,.6);cursor:pointer;display:flex;align-items:center;border-bottom:3px solid transparent;margin-bottom:-1px;transition:all .1s;font-weight:500;white-space:nowrap;user-select:none}
+.tab:hover{color:rgba(255,255,255,.9);background:rgba(255,255,255,.06)}
+.tab.on{color:#fff;border-bottom-color:#fff;font-weight:600}
+.tab-sep{width:1px;background:rgba(255,255,255,.12);margin:8px .25rem;flex-shrink:0}
+
+.body{flex:1;overflow-y:auto;background:var(--bg)}
+.scr{display:none}.scr.on{display:block}
+.cnt{max-width:1280px;margin:0 auto;padding:1rem 1.5rem}
+
+/* ═══ SLDS PRIMITIVES ═══ */
+.ph{background:var(--white);border-bottom:1px solid var(--bdr);padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between}
+.ph-row{display:flex;align-items:center;gap:.75rem}
+.ph-icon{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800}
+.ph-title{font-size:1.125rem;font-weight:700;line-height:1.25}
+.ph-detail{font-size:.75rem;color:var(--txt2)}
+.ph-actions{display:flex;gap:.5rem;align-items:center}
+
+.card{background:var(--white);border:1px solid var(--bdr);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:.75rem}
+.card-h{padding:.625rem .75rem;border-bottom:1px solid var(--bdr-lt);display:flex;align-items:center;justify-content:space-between}
+.card-ht{display:flex;align-items:center;gap:.5rem}
+.card-hi{width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.6875rem;flex-shrink:0}
+.card-t{font-size:.8125rem;font-weight:700}.card-st{font-size:.6875rem;color:var(--txt2)}
+.card-b{padding:.75rem}.card-bnp{padding:0}
+.card-f{padding:.5rem .75rem;border-top:1px solid var(--bdr-lt);font-size:.6875rem;color:var(--txt2)}
+
+.btn{padding:0 .875rem;height:30px;border-radius:var(--r);font-size:.75rem;font-weight:500;border:1px solid var(--bdr);background:var(--white);color:var(--brand);cursor:pointer;display:inline-flex;align-items:center;gap:.375rem;transition:all .1s;font-family:inherit}
+.btn:hover{background:#f4f6f9}.btn:active{transform:scale(.98)}
+.btn-brand{background:var(--brand);color:#fff;border-color:var(--brand)}.btn-brand:hover{background:var(--brand-dk)}
+.btn-success{background:var(--success);color:#fff;border-color:var(--success)}.btn-success:hover{background:#276e3b}
+.btn-destruct{background:var(--destruct);color:#fff;border-color:var(--destruct)}.btn-destruct:hover{background:#a8302b}
+.btn-ex{background:var(--ex);color:#fff;border-color:var(--ex)}.btn-ex:hover{background:var(--ex-lt)}
+.btn-sm{height:26px;font-size:.6875rem;padding:0 .625rem}
+.btn-icon{width:30px;padding:0;justify-content:center}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:15px;font-size:.625rem;font-weight:700;white-space:nowrap;background:#ecebea;color:#514f4d}
+.badge-s{background:#caf1d8;color:#194e31}.badge-w{background:#fef0cd;color:#8c4b02}.badge-e{background:#fdd;color:#8e030f}
+.badge-b{background:#d8edff;color:#014486}.badge-inv{background:#706e6b;color:#fff}.badge-ex{background:var(--ex-bg);color:var(--ex)}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;display:inline-block}
+
+.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:.75rem}
+.tbl thead th{padding:.5rem .625rem;font-size:.625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;background:#fafafb;border-bottom:1px solid var(--bdr);text-align:left;white-space:nowrap}
+.tbl tbody td{padding:.5rem .625rem;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+.tbl tbody tr{cursor:pointer;transition:background .08s}.tbl tbody tr:hover{background:#f4f6f9}
+.tbl .r{text-align:right}.tbl .b{font-weight:700}
+.tbl input[type=checkbox]{width:14px;height:14px;cursor:pointer;accent-color:var(--brand)}
+
+.pbar{height:6px;background:#ecebea;border-radius:15px;overflow:hidden}.pbar-v{height:100%;border-radius:15px;transition:width .4s}
+
+/* PATH */
+.path{display:flex;background:#fafafb;border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden}
+.path-i{flex:1;display:flex;align-items:center;justify-content:center;padding:.5rem;gap:.375rem;font-size:.7rem;font-weight:600;color:var(--txt2);position:relative;cursor:pointer;transition:all .1s;border-right:1px solid var(--bdr)}
+.path-i:last-child{border-right:none}
+.path-i.done{background:#f0fff4;color:var(--success)}.path-i.cur{background:var(--brand);color:#fff}
+.path-i.cur::after{content:'';position:absolute;right:-8px;top:50%;transform:translateY(-50%);border:8px solid transparent;border-left-color:var(--brand);z-index:1}
+.path-n{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.5625rem;border:1.5px solid currentColor;flex-shrink:0}
+.path-i.done .path-n{background:var(--success);color:#fff;border-color:var(--success)}.path-i.cur .path-n{background:#fff;color:var(--brand);border-color:#fff}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(8,7,7,.6);z-index:9000;display:none;align-items:center;justify-content:center;padding:2rem}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:var(--r);width:100%;max-width:40rem;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.modal-hd{padding:.625rem 1rem;background:var(--ex);color:#fff;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-ht{display:flex;align-items:center;gap:.625rem}
+.modal-x{background:none;border:none;color:rgba(255,255,255,.8);cursor:pointer;font-size:1.25rem;padding:4px;border-radius:4px}.modal-x:hover{background:rgba(255,255,255,.15);color:#fff}
+.modal-bd{flex:1;overflow-y:auto;padding:1rem 1.25rem}
+.modal-ft{padding:.625rem 1rem;border-top:1px solid var(--bdr);display:flex;justify-content:flex-end;gap:.5rem;flex-shrink:0;background:#fafafb}
+
+/* TOAST */
+.toast-c{position:fixed;top:50px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:.5rem;pointer-events:none}
+.toast{padding:.625rem 1rem;border-radius:var(--r);display:flex;align-items:center;gap:.5rem;font-size:.75rem;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.15);pointer-events:auto;animation:toastIn .3s ease,toastOut .3s ease 3s forwards;min-width:18rem}
+.toast-s{background:var(--success);color:#fff}.toast-e{background:var(--destruct);color:#fff}.toast-i{background:var(--brand);color:#fff}.toast-w{background:#8c4b02;color:#fff}
+@keyframes toastIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{from{opacity:1}to{opacity:0}}
+
+/* ═══ COMPONENT STYLES ═══ */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:.75rem}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:.75rem}
+.g31{display:grid;grid-template-columns:3fr 1fr;gap:.75rem}
+
+.mc{background:#fff;border:1px solid var(--bdr);border-radius:var(--r);padding:.625rem;box-shadow:var(--sh)}
+.mc-label{font-size:.625rem;color:var(--txt2);font-weight:500;text-transform:uppercase;letter-spacing:.03em}
+.mc-val{font-size:1.125rem;font-weight:700;margin-top:1px;line-height:1.2}
+.mc-sub{font-size:.5625rem;color:var(--txt2);margin-top:1px}
+.mc-top{display:flex;justify-content:space-between;align-items:flex-start}
+.mc-ic{width:28px;height:28px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:.75rem}
+
+.ch{display:inline-flex;align-items:center;gap:.25rem;font-size:.6875rem;font-weight:500;color:#514f4d}
+.ch-i{width:20px;height:20px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:700;flex-shrink:0}
+.ch-wa .ch-i{background:#e8f5e9;color:#2e7d32}.ch-sms .ch-i{background:#ede7f6;color:#5e35b1}
+.ch-call .ch-i{background:#fff3e0;color:#e65100}.ch-email .ch-i{background:#e3f2fd;color:#1565c0}
+
+.exec-row{display:flex;align-items:center;gap:.625rem;padding:.5rem .75rem;border-bottom:1px solid #f0f0f0;cursor:pointer;transition:background .08s}
+.exec-row:last-child{border-bottom:none}.exec-row:hover{background:#f4f6f9}
+.exec-row .si{width:24px;height:24px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:.625rem;flex-shrink:0}
+.exec-row .info{flex:1;min-width:0}.exec-row .nm{font-size:.75rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exec-row .mt{font-size:.625rem;color:var(--txt2)}.exec-row .jid{font-family:'SF Mono',SFMono-Regular,Menlo,monospace;font-size:.5625rem}
+
+.tc{padding:.75rem;border:2px solid var(--bdr);border-radius:var(--r);cursor:pointer;transition:all .1s}
+.tc:hover{border-color:#bbb}.tc.sel{border-color:var(--brand);background:#f4f6f9;box-shadow:0 0 0 1px var(--brand)}
+.tc.dis{opacity:.4;cursor:not-allowed}
+.tc-h{display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem}
+.tc-ic{width:24px;height:24px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:.625rem;flex-shrink:0}
+.tc-t{font-size:.75rem;font-weight:600}.tc-d{font-size:.625rem;color:var(--txt2);line-height:1.5}
+
+.sg{display:flex;align-items:flex-start;gap:.625rem;padding:.5rem;border:1px solid #f0f0f0;border-radius:var(--r);margin-bottom:.375rem;background:#fafafb}
+.sg-ic{width:22px;height:22px;border-radius:var(--r);background:#caf1d8;color:var(--success);display:flex;align-items:center;justify-content:center;font-size:.5625rem;flex-shrink:0}
+.sg-info{flex:1}.sg-nm{font-size:.75rem;font-weight:600}.sg-desc{font-size:.625rem;color:var(--txt2)}
+.sg-tog{width:28px;height:14px;background:var(--success);border-radius:10px;position:relative;flex-shrink:0;margin-top:2px}
+.sg-tog::after{content:'';position:absolute;right:2px;top:2px;width:10px;height:10px;background:#fff;border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+
+.tag{padding:1px 5px;border-radius:var(--r);font-size:.5rem;font-weight:600;display:inline-flex;align-items:center}
+.tag-s{background:#caf1d8;color:#194e31}.tag-w{background:#fef0cd;color:#8c4b02}.tag-n{background:#ecebea;color:#514f4d}
+.tag-b{background:#d8edff;color:#014486}.tag-ex{background:var(--ex-bg);color:var(--ex)}
+
+.notify{padding:.5rem .625rem;border-radius:var(--r);display:flex;align-items:center;gap:.5rem;font-size:.6875rem;font-weight:500;margin-bottom:.375rem;border-left:4px solid}
+.notify-w{background:#fef0cd;border-left-color:#fe9339;color:#8c4b02}
+.notify-e{background:#fdd;border-left-color:#ea001e;color:#8e030f}
+.notify-s{background:#caf1d8;border-left-color:var(--success);color:#194e31}
+.notify-time{margin-left:auto;font-size:.5625rem;font-weight:400;color:var(--txt2)}
+
+.alert-box{padding:.5rem .625rem;border-radius:var(--r);display:flex;gap:.375rem;align-items:flex-start;font-size:.625rem;line-height:1.4;margin-top:.5rem}
+.ab-w{background:#fef0cd;color:#8c4b02;border:1px solid #fde68a}.ab-i{background:#d8edff;color:#014486;border:1px solid #b0d4ff}
+.ab-e{background:#fdd;color:#8e030f;border:1px solid #fbb}.ab-s{background:#caf1d8;color:#194e31;border:1px solid #7cc294}
+
+.intel-hero{padding:.75rem;border-radius:var(--r);background:var(--ex);color:#fff;display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+.im{padding:.5rem;border-radius:var(--r);background:#fafafb;border:1px solid #f0f0f0}
+.im-l{font-size:.5625rem;color:var(--txt2);font-weight:500}.im-v{font-size:.875rem;font-weight:700;margin-top:1px}
+.exp-dk{padding:.625rem;border-radius:var(--r);background:#16325c;color:#fff;margin-bottom:.5rem}
+.cost-g{padding:.625rem;border-radius:var(--r);background:var(--success);color:#fff;margin-bottom:.5rem}
+.fb-row{display:flex;align-items:center;gap:.25rem;padding:.25rem .375rem;border-radius:var(--r);background:#fef0cd;margin-bottom:.25rem;font-size:.625rem}
+
+.chart-box{height:12rem;position:relative}.pie-box{height:8rem;position:relative}
+
+.cr{border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:.375rem;overflow:hidden}
+.cr-h{display:flex;align-items:center;gap:.5rem;padding:.375rem .625rem;cursor:pointer;transition:background .08s}
+.cr-h:hover{background:#f4f6f9}
+.cr-av{width:24px;height:24px;border-radius:50%;background:var(--ex-bg);color:var(--ex);display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:700;flex-shrink:0}
+.cr-info{flex:1;min-width:0}.cr-nm{font-size:.75rem;font-weight:600}.cr-mt{font-size:.5625rem;color:var(--txt2)}
+.sd{display:flex;gap:2px}.sd-d{width:5px;height:5px;border-radius:50%}
+.cr-body{display:none;padding:.375rem .625rem .5rem 2.75rem;border-top:1px solid #f0f0f0}
+.cr.open .cr-body{display:block}
+.tl-e{display:flex;align-items:flex-start;gap:.375rem;padding:.25rem 0;font-size:.625rem;border-left:2px solid #ecebea;padding-left:.5rem;margin-left:.25rem;position:relative}
+.tl-e::before{content:'';position:absolute;left:-4px;top:.4rem;width:6px;height:6px;border-radius:50%;background:#ecebea}
+.tl-e.tl-g::before{background:var(--success)}.tl-e.tl-b::before{background:var(--brand)}.tl-e.tl-r::before{background:var(--err)}.tl-e.tl-p::before{background:var(--ex)}
+
+.live-d{display:flex;align-items:center;gap:.25rem;font-size:.5625rem;color:var(--txt2)}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.af{background:#fff;border:1px solid var(--bdr);border-radius:var(--r);padding:.625rem .75rem;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--sh);margin-top:.75rem}
+
+/* Record detail layout */
+.rec-layout{display:grid;grid-template-columns:2.5fr 1fr;gap:.75rem}
+.rec-detail-row{display:flex;padding:.375rem 0;border-bottom:1px solid #f5f5f5}
+.rec-detail-row:last-child{border-bottom:none}
+.rec-lbl{font-size:.625rem;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;width:7rem;flex-shrink:0}
+.rec-val{font-size:.75rem;font-weight:500}
+
+/* Breadcrumbs */
+.bcrumb{font-size:.6875rem;color:var(--txt2);padding:.5rem 1.5rem;background:var(--white);border-bottom:1px solid var(--bdr-lt);display:flex;gap:.375rem;align-items:center}
+.bcrumb a{font-size:.6875rem}
+.bcrumb span{color:#bbb}
+
+/* SF Home specific */
+.home-task{display:flex;align-items:center;gap:.5rem;padding:.5rem .625rem;border-bottom:1px solid #f0f0f0;font-size:.75rem;cursor:pointer;transition:background .08s}
+.home-task:hover{background:#f4f6f9}.home-task:last-child{border-bottom:none}
+.home-task .cb{width:14px;height:14px;border:1.5px solid var(--bdr);border-radius:3px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.5rem;color:transparent;transition:all .1s}
+.home-task .cb:hover{border-color:var(--brand)}.home-task .cb.done{background:var(--success);border-color:var(--success);color:#fff}
+
+/* Bulk action bar */
+.bulk-bar{padding:.5rem .75rem;background:var(--brand);color:#fff;display:flex;align-items:center;gap:.75rem;font-size:.75rem;font-weight:600;border-radius:var(--r) var(--r) 0 0;animation:slideDown .2s ease}
+@keyframes slideDown{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.bulk-bar .btn{height:26px;font-size:.6875rem;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff}
+.bulk-bar .btn:hover{background:rgba(255,255,255,.25)}
+.bulk-bar .btn-ex{background:var(--ex);border-color:var(--ex)}
+
+/* Journey item in picker */
+.jp-item{display:flex;align-items:center;gap:.625rem;padding:.625rem .75rem;border:1px solid #f0f0f0;border-radius:var(--r);margin-bottom:.375rem;cursor:pointer;transition:all .12s}
+.jp-item:hover{border-color:var(--brand);background:#f4f6f9}
+.jp-item.sel{border-color:var(--ex);background:var(--ex-bg);box-shadow:0 0 0 1px var(--ex)}
+.jp-ic{width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0}
+.jp-info{flex:1;min-width:0}.jp-nm{font-size:.75rem;font-weight:600}.jp-mt{font-size:.5625rem;color:var(--txt2)}
+
+/* Custom scrollbar */
+.body::-webkit-scrollbar{width:6px}.body::-webkit-scrollbar-track{background:transparent}.body::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+</style>
+</head>
+<body>
+<div class="chrome">
+  <div class="gh">
+    <div class="waffle"><div class="wd"></div><div class="wd"></div><div class="wd"></div><div class="wd"></div><div class="wd"></div><div class="wd"></div><div class="wd"></div><div class="wd"></div><div class="wd"></div></div>
+    <span class="gh-logo">Sales</span>
+    <div class="gh-search"><input placeholder="Search Salesforce..."></div>
+    <div class="gh-r"><div class="gh-ic">&#x1F514;</div><div class="gh-ic">&#9881;</div><div class="gh-ic">?</div><div class="av">US</div></div>
+  </div>
+  <div class="nav" id="navBar"></div>
+  <div class="body" id="main"></div>
+</div>
+<div class="toast-c" id="toastC"></div>
+<div class="modal-bg" id="journeyModal"><div class="modal" style="max-width:34rem" id="journeyModalInner"></div></div>
+<div class="modal-bg" id="dryModal"><div class="modal" id="dryModalInner"></div></div>
+<script>
+/* ═══════════════════════════════════════════════
+   DATA
+   ═══════════════════════════════════════════════ */
+const D={
+  contacts:[
+    {id:'C001',fn:'Rajesh',ln:'Kumar',acct:'Acme Corp',phone:'+91 98765 43210',email:'rajesh.kumar@acme.com',title:'VP Finance',stage:'Customer',owner:'Utsuk S.',created:'2025-11-15',lastAct:'2 hrs ago',wa:true,sms:true},
+    {id:'C002',fn:'Priya',ln:'Sharma',acct:'TechVista',phone:'+91 87654 32109',email:'priya.sharma@techvista.com',title:'Head of Ops',stage:'Customer',owner:'Utsuk S.',created:'2025-12-03',lastAct:'5 hrs ago',wa:true,sms:true},
+    {id:'C003',fn:'Amit',ln:'Patel',acct:'GlobalFin',phone:'+91 76543 21098',email:'amit.patel@globalfin.com',title:'CFO',stage:'Prospect',owner:'Riya M.',created:'2026-01-22',lastAct:'1 day ago',wa:false,sms:true},
+    {id:'C004',fn:'Neha',ln:'Gupta',acct:'DataSync',phone:'+91 65432 10987',email:'neha.gupta@datasync.com',title:'COO',stage:'Customer',owner:'Utsuk S.',created:'2026-02-10',lastAct:'3 hrs ago',wa:true,sms:true},
+    {id:'C005',fn:'Vikram',ln:'Singh',acct:'CloudNine',phone:'+91 54321 09876',email:'vikram.singh@cloudnine.com',title:'CTO',stage:'Prospect',owner:'Riya M.',created:'2026-02-28',lastAct:'6 hrs ago',wa:true,sms:false},
+    {id:'C006',fn:'Ananya',ln:'Reddy',acct:'Zenith Ltd',phone:'+91 43210 98765',email:'ananya.reddy@zenith.com',title:'Director',stage:'Customer',owner:'Utsuk S.',created:'2026-03-05',lastAct:'12 hrs ago',wa:true,sms:true},
+    {id:'C007',fn:'Sanjay',ln:'Mehta',acct:'PayFlow',phone:'+91 32109 87654',email:'sanjay.mehta@payflow.com',title:'VP Product',stage:'Lead',owner:'Riya M.',created:'2026-03-12',lastAct:'2 days ago',wa:false,sms:true},
+    {id:'C008',fn:'Kavita',ln:'Nair',acct:'BrightEdge',phone:'+91 21098 76543',email:'kavita.nair@brightedge.com',title:'CEO',stage:'Customer',owner:'Utsuk S.',created:'2026-03-18',lastAct:'1 hr ago',wa:true,sms:true},
+    {id:'C009',fn:'Rohit',ln:'Joshi',acct:'ScaleUp',phone:'+91 10987 65432',email:'rohit.joshi@scaleup.com',title:'Head of Sales',stage:'Prospect',owner:'Riya M.',created:'2026-03-25',lastAct:'4 hrs ago',wa:true,sms:true},
+    {id:'C010',fn:'Deepa',ln:'Iyer',acct:'NovaTech',phone:'+91 99876 54321',email:'deepa.iyer@novatech.com',title:'CFO',stage:'Customer',owner:'Utsuk S.',created:'2026-04-01',lastAct:'30 min ago',wa:true,sms:true}
+  ],
+  accounts:[
+    {name:'Acme Corp',industry:'Technology',arr:'₹45L',contacts:24,stage:'Active',owner:'Utsuk S.'},
+    {name:'TechVista',industry:'Software',arr:'₹32L',contacts:18,stage:'Active',owner:'Utsuk S.'},
+    {name:'GlobalFin',industry:'Financial Services',arr:'₹78L',contacts:42,stage:'Active',owner:'Riya M.'},
+    {name:'DataSync',industry:'Cloud Services',arr:'₹22L',contacts:11,stage:'Active',owner:'Utsuk S.'},
+    {name:'CloudNine',industry:'SaaS',arr:'₹56L',contacts:29,stage:'At Risk',owner:'Riya M.'},
+    {name:'Zenith Ltd',industry:'Manufacturing',arr:'₹35L',contacts:15,stage:'Active',owner:'Utsuk S.'},
+    {name:'PayFlow',industry:'Fintech',arr:'₹41L',contacts:22,stage:'New',owner:'Riya M.'},
+    {name:'BrightEdge',industry:'Consulting',arr:'₹19L',contacts:8,stage:'Active',owner:'Utsuk S.'}
+  ],
+  reports:[
+    {id:'R001',name:'Overdue Payments — Q2 2026',folder:'Collections',records:2450,created:'Apr 1, 2026',lastRun:'Today',type:'Tabular'},
+    {id:'R002',name:'New Customer Onboarding — Apr 2026',folder:'Onboarding',records:890,created:'Mar 28, 2026',lastRun:'Today',type:'Summary'},
+    {id:'R003',name:'High-Value Accounts at Risk',folder:'Account Health',records:342,created:'Mar 15, 2026',lastRun:'Yesterday',type:'Tabular'},
+    {id:'R004',name:'Inactive Contacts > 90 Days',folder:'Data Quality',records:5670,created:'Feb 20, 2026',lastRun:'Today',type:'Tabular'},
+    {id:'R005',name:'Monthly Collection Target',folder:'Collections',records:1200,created:'Apr 3, 2026',lastRun:'Today',type:'Matrix'}
+  ],
+  journeys:[
+    {id:'BJ-2026-04-0847',name:'Q2 Collections Campaign',channels:['WhatsApp','SMS','Call'],status:'Ready',desc:'3-step collection with fallback chain'},
+    {id:'BJ-2026-04-0901',name:'Welcome Series — New Users',channels:['WhatsApp','Email'],status:'Ready',desc:'Onboarding drip campaign'},
+    {id:'BJ-2026-04-0923',name:'Upsell Premium Plan',channels:['SMS','WhatsApp'],status:'Ready',desc:'Upgrade nudge for freemium users'},
+    {id:'BJ-2026-04-1001',name:'Payment Reminder',channels:['WhatsApp','SMS','Call'],status:'Ready',desc:'Overdue invoice reminder flow'},
+    {id:'BJ-2026-04-1055',name:'Re-engagement Campaign',channels:['Email','WhatsApp','SMS'],status:'Ready',desc:'Win-back inactive contacts'}
+  ]
+};
+
+/* ═══ STATE ═══ */
+let S={
+  screen:'home',
+  sel:new Set(),
+  ctx:{type:'full',name:'',count:0,source:''},
+  detailContact:null,
+  detailReport:null,
+  step:0,
+  selJourney:null,
+  paused:false,
+  chartsInit:false
+};
+
+/* ═══ NAVIGATION ═══ */
+const TABS=[
+  {id:'home',label:'Home',icon:null},
+  {id:'accounts',label:'Accounts',icon:null},
+  {id:'contacts',label:'Contacts',icon:null},
+  {id:'reports',label:'Reports',icon:null},
+  {id:'sep'},
+  {id:'exDash',label:'Exotel Home',icon:null},
+  {id:'schedule',label:'Journey Execution',icon:null},
+  {id:'monitor',label:'Live Monitor',icon:null}
+];
+
+function renderNav(){
+  const n=document.getElementById('navBar');
+  n.innerHTML='<div class="nav-brand"><div class="nav-logo">X</div><span class="nav-name">Exotel Engage</span></div>'+TABS.map(t=>{
+    if(t.id==='sep')return'<div class="tab-sep"></div>';
+    return`<div class="tab${S.screen===t.id?' on':''}" onclick="go('${t.id}')">${t.label}</div>`;
+  }).join('');
+}
+
+function go(id,opts){
+  if(opts&&opts.contact)S.detailContact=opts.contact;
+  if(opts&&opts.report)S.detailReport=opts.report;
+  S.screen=id;
+  renderNav();
+  renderScreen();
+  document.getElementById('main').scrollTop=0;
+}
+
+function renderScreen(){
+  const m=document.getElementById('main');
+  const fn={
+    home:renderHome,accounts:renderAccounts,contacts:renderContacts,
+    contactDetail:renderContactDetail,reports:renderReports,reportDetail:renderReportDetail,
+    exDash:renderExDash,schedule:renderSchedule,monitor:renderMonitor
+  };
+  m.innerHTML=(fn[S.screen]||renderHome)();
+  if(S.screen==='monitor')initCharts();
+}
+
+/* ═══ TOAST ═══ */
+function toast(msg,type='i'){
+  const c=document.getElementById('toastC');
+  const t=document.createElement('div');t.className='toast toast-'+type;t.innerHTML=(type==='s'?'✓ ':type==='e'?'✕ ':type==='w'?'⚠ ':'ℹ ')+msg;
+  c.appendChild(t);setTimeout(()=>t.remove(),3500);
+}
+
+/* ═══ HELPERS ═══ */
+const ini=c=>(c.fn[0]+c.ln[0]).toUpperCase();
+const full=c=>c.fn+' '+c.ln;
+const stageColor=s=>({Customer:'badge-s',Prospect:'badge-b',Lead:'badge-w','At Risk':'badge-e',Active:'badge-s',New:'badge-b'}[s]||'badge');
+const chIcon=(ch,small)=>{const m={WhatsApp:['ch-wa','WA'],SMS:['ch-sms','SM'],Call:['ch-call','CA'],Email:['ch-email','EM']};const e=m[ch]||['','?'];return`<span class="ch ${e[0]}"><span class="ch-i">${e[1]}</span>${small?'':'<span>'+ch+'</span>'}</span>`;};
+
+/* ═══════════════════════════════════════════════
+   SCREEN: SALESFORCE HOME
+   ═══════════════════════════════════════════════ */
+function renderHome(){
+  return`<div class="ph"><div class="ph-row"><div class="ph-icon" style="background:#d8edff;color:var(--brand);font-size:1rem">🏠</div><div><div class="ph-title">Home</div><div class="ph-detail">Good afternoon, Utsuk</div></div></div></div>
+  <div class="cnt"><div class="g21">
+    <div>
+      <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:#d8edff;color:var(--brand)">📋</div><div><div class="card-t">My Tasks</div></div></div></div><div class="card-bnp">${
+        [{t:'Follow up with Amit Patel on Q2 deal',d:false,due:'Today'},
+         {t:'Review Overdue Payments report',d:false,due:'Today'},
+         {t:'Prepare onboarding deck for DataSync',d:true,due:'Yesterday'},
+         {t:'Send pricing proposal to CloudNine',d:false,due:'Tomorrow'},
+         {t:'Update CRM data for Zenith Ltd',d:true,due:'Apr 3'}
+        ].map((tk,i)=>`<div class="home-task" onclick="this.querySelector('.cb').classList.toggle('done')"><div class="cb${tk.d?' done':''}">✓</div><div style="flex:1"><div style="font-weight:500${tk.d?';text-decoration:line-through;color:var(--txt2)':''}">${tk.t}</div></div><span class="badge${tk.due==='Today'?' badge-w':''}" style="font-size:.5625rem">${tk.due}</span></div>`).join('')
+      }</div></div>
+      <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">⚡</div><div><div class="card-t">Recent Records</div></div></div></div><div class="card-bnp">${
+        D.contacts.slice(0,5).map(c=>`<div class="exec-row" onclick="go('contactDetail',{contact:'${c.id}'})"><div class="si" style="background:var(--ex-bg);color:var(--ex)">${ini(c)}</div><div class="info"><div class="nm">${full(c)}</div><div class="mt">${c.acct} · ${c.title}</div></div><span style="color:#bbb;font-size:.75rem">›</span></div>`).join('')
+      }</div></div>
+    </div>
+    <div>
+      <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">X</div><div><div class="card-t">Exotel Activity</div><div class="card-st">Recent journey executions</div></div></div><div class="card-st"><a onclick="go('exDash')">View All</a></div></div><div class="card-bnp">
+        <div class="exec-row" onclick="go('monitor')"><div class="si" style="background:#caf1d8;color:var(--success)">▶</div><div class="info"><div class="nm">Q2 Collections Campaign</div><div class="mt jid">BJ-2026-04-0847 · 108.5K · 62%</div></div><span class="badge badge-s" style="font-size:.5rem">Running</span></div>
+        <div class="exec-row" onclick="go('monitor')"><div class="si" style="background:#d8edff;color:var(--brand)">✓</div><div class="info"><div class="nm">Welcome Series</div><div class="mt jid">BJ-2026-04-0901 · 45.2K</div></div><span class="badge badge-b" style="font-size:.5rem">Done</span></div>
+        <div class="exec-row"><div class="si" style="background:#fef0cd;color:#8c4b02">⏰</div><div class="info"><div class="nm">Upsell Premium Plan</div><div class="mt jid">BJ-2026-04-0923 · Tomorrow</div></div><span class="badge badge-w" style="font-size:.5rem">Sched</span></div>
+      </div></div>
+      <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:#caf1d8;color:var(--success)">📊</div><div><div class="card-t">Key Metrics</div></div></div></div><div class="card-b"><div style="display:flex;flex-direction:column;gap:.5rem">
+        <div class="im"><div class="im-l">Open Opportunities</div><div class="im-v">₹2.4 Cr</div></div>
+        <div class="im"><div class="im-l">Won This Month</div><div class="im-v" style="color:var(--success)">₹87L</div></div>
+        <div class="im"><div class="im-l">Contacts Reached (Exotel)</div><div class="im-v" style="color:var(--ex)">1.2M</div></div>
+      </div></div></div>
+    </div>
+  </div></div>`;
+}
+
+/* ═══════════════════════════════════════════════
+   SCREEN: ACCOUNTS
+   ═══════════════════════════════════════════════ */
+function renderAccounts(){
+  return`<div class="ph"><div class="ph-row"><div class="ph-icon" style="background:#7f8de1;color:#fff;font-size:.875rem">🏢</div><div><div class="ph-title">Accounts</div><div class="ph-detail">${D.accounts.length} items · Sorted by Name</div></div></div><div class="ph-actions"><button class="btn btn-brand" onclick="toast('New Account form would open','i')">New</button></div></div>
+  <div class="cnt"><div class="card"><div class="card-bnp"><table class="tbl"><thead><tr><th>Account Name</th><th>Industry</th><th>ARR</th><th class="r">Contacts</th><th>Stage</th><th>Owner</th></tr></thead><tbody>${
+    D.accounts.map(a=>`<tr onclick="toast('Account detail: ${a.name}','i')"><td style="font-weight:600;color:var(--brand)">${a.name}</td><td>${a.industry}</td><td class="b">${a.arr}</td><td class="r">${a.contacts}</td><td><span class="badge ${stageColor(a.stage)}">${a.stage}</span></td><td>${a.owner}</td></tr>`).join('')
+  }</tbody></table></div></div></div>`;
+}
+
+/* ═══════════════════════════════════════════════
+   SCREEN: CONTACTS LIST  ★ Workflow 1 & 2 entry point
+   ═══════════════════════════════════════════════ */
+function renderContacts(){
+  const cnt=S.sel.size;
+  const bulkBar=cnt>0?`<div class="bulk-bar"><span>${cnt} contact${cnt>1?'s':''} selected</span><button class="btn" onclick="S.sel.clear();go('contacts')">Deselect All</button><button class="btn btn-ex" onclick="openJourneyPicker('contacts')">▶ Run Journey</button><button class="btn" onclick="toast('Email composer would open','i')">✉ Send Email</button></div>`:'';
+  return`<div class="ph"><div class="ph-row"><div class="ph-icon" style="background:#1b96ff;color:#fff;font-size:.875rem">👤</div><div><div class="ph-title">Contacts</div><div class="ph-detail">${D.contacts.length} items · All Contacts</div></div></div><div class="ph-actions"><button class="btn btn-brand" onclick="toast('New Contact form would open','i')">New</button></div></div>
+  <div class="cnt"><div class="card">${bulkBar}<div class="card-bnp"><table class="tbl"><thead><tr><th style="width:30px"><input type="checkbox" ${cnt===D.contacts.length?'checked':''} onchange="toggleAll(this.checked)"></th><th>Name</th><th>Account</th><th>Title</th><th>Phone</th><th>Stage</th><th>Last Activity</th></tr></thead><tbody>${
+    D.contacts.map(c=>`<tr><td><input type="checkbox" ${S.sel.has(c.id)?'checked':''} onchange="toggleSel('${c.id}',this.checked)"></td><td><a onclick="go('contactDetail',{contact:'${c.id}'})" style="font-weight:600">${full(c)}</a></td><td>${c.acct}</td><td>${c.title}</td><td style="font-family:monospace;font-size:.6875rem">${c.phone}</td><td><span class="badge ${stageColor(c.stage)}">${c.stage}</span></td><td style="font-size:.625rem;color:var(--txt2)">${c.lastAct}</td></tr>`).join('')
+  }</tbody></table></div></div></div>`;
+}
+
+function toggleSel(id,checked){
+  if(checked)S.sel.add(id);else S.sel.delete(id);go('contacts');
+}
+function toggleAll(checked){
+  D.contacts.forEach(c=>{if(checked)S.sel.add(c.id);else S.sel.delete(c.id);});go('contacts');
+}
+
+/* ═══════════════════════════════════════════════
+   SCREEN: CONTACT DETAIL  ★ Workflow 1 entry point
+   ═══════════════════════════════════════════════ */
+function renderContactDetail(){
+  const c=D.contacts.find(x=>x.id===S.detailContact)||D.contacts[0];
+  const journeyHistory=[
+    {j:'Welcome Series',date:'Mar 15, 2026',ch:'WhatsApp',status:'Delivered',badge:'badge-s'},
+    {j:'Q1 Collections',date:'Feb 28, 2026',ch:'SMS → Call',status:'Connected',badge:'badge-s'},
+    {j:'Product Update',date:'Jan 10, 2026',ch:'WhatsApp',status:'Read',badge:'badge-ex'}
+  ];
+  return`<div class="bcrumb"><a onclick="go('contacts')">Contacts</a><span>›</span><span style="color:var(--txt)">${full(c)}</span></div>
+  <div class="ph"><div class="ph-row"><div class="ph-icon" style="background:var(--ex-bg);color:var(--ex);font-size:1rem;font-weight:700">${ini(c)}</div><div><div class="ph-title">${full(c)}</div><div class="ph-detail">${c.title} at ${c.acct} · ${c.phone}</div></div></div>
+  <div class="ph-actions"><button class="btn" onclick="toast('Edit form would open','i')">Edit</button><button class="btn btn-ex" onclick="openJourneyPicker('single','${c.id}')">▶ Run Journey</button><button class="btn" onclick="toast('More actions dropdown','i')">▾</button></div></div>
+  <div class="cnt"><div class="rec-layout">
+    <div>
+      <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:#d8edff;color:var(--brand)">ℹ</div><div class="card-t">Contact Details</div></div></div><div class="card-b"><div class="g2">
+        <div><div class="rec-detail-row"><div class="rec-lbl">Full Name</div><div class="rec-val">${full(c)}</div></div><div class="rec-detail-row"><div class="rec-lbl">Account</div><div class="rec-val"><a onclick="toast('Account detail: ${c.acct}','i')">${c.acct}</a></div></div><div class="rec-detail-row"><div class="rec-lbl">Title</div><div class="rec-val">${c.title}</div></div><div class="rec-detail-row"><div class="rec-lbl">Stage</div><div class="rec-val"><span class="badge ${stageColor(c.stage)}">${c.stage}</span></div></div></div>
+        <div><div class="rec-detail-row"><div class="rec-lbl">Phone</div><div class="rec-val" style="font-family:monospace">${c.phone}</div></div><div class="rec-detail-row"><div class="rec-lbl">Email</div><div class="rec-val"><a href="#">${c.email}</a></div></div><div class="rec-detail-row"><div class="rec-lbl">Owner</div><div class="rec-val">${c.owner}</div></div><div class="rec-detail-row"><div class="rec-lbl">Created</div><div class="rec-val">${c.created}</div></div></div>
+      </div></div></div>
+      <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:#fef0cd;color:#8c4b02">📞</div><div class="card-t">Activity</div></div><div class="card-st"><a onclick="toast('New activity form','i')">Log a Call</a></div></div><div class="card-bnp">${
+        [{t:'Call with '+c.fn+' about renewal',d:'Apr 4, 2026',type:'Call',by:c.owner},
+         {t:'Email sent: Invoice reminder',d:'Apr 1, 2026',type:'Email',by:'System'},
+         {t:'Meeting: Q2 planning',d:'Mar 28, 2026',type:'Event',by:c.owner}
+        ].map(a=>`<div class="exec-row" style="cursor:default"><div class="si" style="background:${a.type==='Call'?'#fff3e0':a.type==='Email'?'#e3f2fd':'#e8f5e9'};color:${a.type==='Call'?'#e65100':a.type==='Email'?'#1565c0':'#2e7d32'};font-size:.5rem">${a.type==='Call'?'📞':a.type==='Email'?'✉':'📅'}</div><div class="info"><div class="nm">${a.t}</div><div class="mt">${a.d} · ${a.by}</div></div></div>`).join('')
+      }</div></div>
+    </div>
+    <div>
+      <div class="card" style="border:2px solid var(--ex);border-radius:var(--r)"><div class="card-h" style="background:var(--ex-bg)"><div class="card-ht"><div class="card-hi" style="background:var(--ex);color:#fff;font-weight:800;font-size:.625rem">X</div><div><div class="card-t" style="color:var(--ex)">Exotel Engagement</div></div></div></div><div class="card-b">
+        <button class="btn btn-ex" style="width:100%;justify-content:center;margin-bottom:.625rem" onclick="openJourneyPicker('single','${c.id}')">▶ Run Journey for ${c.fn}</button>
+        <div style="font-size:.5625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:.25rem">Channel Availability</div>
+        <div style="display:flex;gap:.375rem;margin-bottom:.625rem">${c.wa?'<span class="badge badge-s" style="font-size:.5rem">✓ WhatsApp</span>':'<span class="badge badge-e" style="font-size:.5rem">✕ WhatsApp</span>'}${c.sms?'<span class="badge badge-s" style="font-size:.5rem">✓ SMS</span>':'<span class="badge badge-e" style="font-size:.5rem">✕ SMS</span>'}<span class="badge badge-s" style="font-size:.5rem">✓ Call</span></div>
+        <div style="font-size:.5625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:.25rem">Journey History</div>
+        ${journeyHistory.map(j=>`<div style="display:flex;align-items:center;gap:.375rem;padding:.375rem;border-bottom:1px solid #f0f0f0;font-size:.625rem"><div style="flex:1"><div style="font-weight:600">${j.j}</div><div style="color:var(--txt2)">${j.date} · ${j.ch}</div></div><span class="badge ${j.badge}" style="font-size:.5rem">${j.status}</span></div>`).join('')}
+      </div></div>
+      <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:#e3f2fd;color:#1565c0">💰</div><div class="card-t">Opportunities</div></div></div><div class="card-bnp">${
+        [{n:'Q2 Renewal — '+c.acct,amt:'₹12L',stage:'Negotiation',prob:'75%'},
+         {n:'Add-on License',amt:'₹4.5L',stage:'Proposal',prob:'50%'}
+        ].map(o=>`<div class="exec-row" style="cursor:default"><div class="info"><div class="nm">${o.n}</div><div class="mt">${o.stage} · ${o.prob} · ${o.amt}</div></div></div>`).join('')
+      }</div></div>
+    </div>
+  </div></div>`;
+}
+
+/* ═══════════════════════════════════════════════
+   SCREEN: REPORTS LIST  ★ Workflow 2 entry point
+   ═══════════════════════════════════════════════ */
+function renderReports(){
+  return`<div class="ph"><div class="ph-row"><div class="ph-icon" style="background:#f28b00;color:#fff;font-size:.875rem">📊</div><div><div class="ph-title">Reports</div><div class="ph-detail">${D.reports.length} reports · All Reports</div></div></div><div class="ph-actions"><button class="btn btn-brand" onclick="toast('Report builder would open','i')">New Report</button></div></div>
+  <div class="cnt"><div class="card"><div class="card-bnp"><table class="tbl"><thead><tr><th>Report Name</th><th>Folder</th><th class="r">Records</th><th>Type</th><th>Last Run</th><th style="width:10rem"></th></tr></thead><tbody>${
+    D.reports.map(r=>`<tr><td><a onclick="go('reportDetail',{report:'${r.id}'})" style="font-weight:600">${r.name}</a></td><td>${r.folder}</td><td class="r b">${r.records.toLocaleString()}</td><td><span class="badge">${r.type}</span></td><td style="font-size:.625rem;color:var(--txt2)">${r.lastRun}</td><td style="text-align:right"><button class="btn btn-sm btn-ex" onclick="event.stopPropagation();openJourneyPicker('report','${r.id}')">▶ Run Journey</button></td></tr>`).join('')
+  }</tbody></table></div></div></div>`;
+}
+
+/* ═══════════════════════════════════════════════
+   SCREEN: REPORT DETAIL  ★ Workflow 2 entry point
+   ═══════════════════════════════════════════════ */
+function renderReportDetail(){
+  const r=D.reports.find(x=>x.id===S.detailReport)||D.reports[0];
+  const rows=D.contacts.slice(0,8);
+  return`<div class="bcrumb"><a onclick="go('reports')">Reports</a><span>›</span><span style="color:var(--txt)">${r.name}</span></div>
+  <div class="ph"><div class="ph-row"><div class="ph-icon" style="background:#f28b00;color:#fff;font-size:.875rem">📊</div><div><div class="ph-title">${r.name}</div><div class="ph-detail">${r.records.toLocaleString()} records · ${r.folder} · Last run: ${r.lastRun}</div></div></div>
+  <div class="ph-actions"><button class="btn" onclick="toast('Report would refresh','i')">↻ Run Report</button><button class="btn btn-ex" onclick="openJourneyPicker('report','${r.id}')">▶ Run Journey for ${r.records.toLocaleString()} Contacts</button></div></div>
+  <div class="cnt"><div class="card"><div class="card-h"><div class="card-ht"><div class="card-t">Report Preview</div></div><div class="card-st">${r.records.toLocaleString()} total records (showing first ${rows.length})</div></div><div class="card-bnp"><table class="tbl"><thead><tr><th>Contact Name</th><th>Account</th><th>Phone</th><th>Email</th><th>Stage</th><th>Last Activity</th></tr></thead><tbody>${
+    rows.map(c=>`<tr onclick="go('contactDetail',{contact:'${c.id}'})"><td style="font-weight:600;color:var(--brand)">${full(c)}</td><td>${c.acct}</td><td style="font-family:monospace;font-size:.625rem">${c.phone}</td><td style="font-size:.625rem">${c.email}</td><td><span class="badge ${stageColor(c.stage)}">${c.stage}</span></td><td style="font-size:.5625rem;color:var(--txt2)">${c.lastAct}</td></tr>`).join('')
+  }</tbody></table></div><div class="card-f">Showing 1-${rows.length} of ${r.records.toLocaleString()} records</div></div>
+  <div class="alert-box ab-i" style="margin-top:0">ℹ <div><strong>Exotel Integration:</strong> Click "Run Journey" above to execute a Business Journey for all ${r.records.toLocaleString()} contacts in this report. The journey will process contacts in batches using your configured channel priorities.</div></div>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════════
+   JOURNEY PICKER MODAL (shared by both workflows)
+   ═══════════════════════════════════════════════ */
+function openJourneyPicker(mode,id){
+  S.selJourney=null;
+  let title='',subtitle='';
+  if(mode==='single'){
+    const c=D.contacts.find(x=>x.id===id)||D.contacts[0];
+    title='Run Journey for '+full(c);
+    subtitle='Select a Business Journey to execute for this contact';
+    S.ctx={type:'single',name:full(c),count:1,source:c.id,contactObj:c};
+  }else if(mode==='contacts'){
+    title='Run Journey for '+S.sel.size+' Contact'+(S.sel.size>1?'s':'');
+    subtitle='Select a Business Journey to execute for the selected contacts';
+    S.ctx={type:'list',name:S.sel.size+' selected contacts',count:S.sel.size,source:'selection'};
+  }else if(mode==='report'){
+    const r=D.reports.find(x=>x.id===id)||D.reports[0];
+    title='Run Journey for Report';
+    subtitle=r.name+' · '+r.records.toLocaleString()+' contacts';
+    S.ctx={type:'report',name:r.name,count:r.records,source:r.id};
+  }
+
+  const m=document.getElementById('journeyModalInner');
+  m.innerHTML=`<div class="modal-hd"><div class="modal-ht"><div style="width:24px;height:24px;border-radius:4px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.625rem;font-weight:800">X</div><div><div style="font-weight:700;font-size:.8125rem">${title}</div><div style="font-size:.5625rem;opacity:.75">${subtitle}</div></div></div><button class="modal-x" onclick="closeModal('journeyModal')">×</button></div>
+  <div class="modal-bd"><div style="font-size:.625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:.5rem">Available Journeys</div>${
+    D.journeys.map(j=>`<div class="jp-item" id="jp-${j.id}" onclick="selectJourney('${j.id}')"><div class="jp-ic" style="background:var(--ex-bg);color:var(--ex)">⛗</div><div class="jp-info"><div class="jp-nm">${j.name}</div><div class="jp-mt"><span class="jid" style="font-family:monospace">${j.id}</span> · ${j.desc}</div><div style="display:flex;gap:.25rem;margin-top:.25rem">${j.channels.map(ch=>'<span class="badge badge-s" style="font-size:.5rem">'+ch+'</span>').join('')}</div></div></div>`).join('')
+  }</div>
+  <div class="modal-ft"><button class="btn" onclick="closeModal('journeyModal')">Cancel</button><button class="btn btn-ex" id="jpGo" disabled onclick="proceedFromPicker()">Select &amp; Configure →</button></div>`;
+  document.getElementById('journeyModal').classList.add('open');
+}
+
+function selectJourney(id){
+  S.selJourney=id;
+  document.querySelectorAll('.jp-item').forEach(e=>e.classList.remove('sel'));
+  document.getElementById('jp-'+id).classList.add('sel');
+  document.getElementById('jpGo').disabled=false;
+}
+
+function proceedFromPicker(){
+  closeModal('journeyModal');
+  const j=D.journeys.find(x=>x.id===S.selJourney);
+  toast('Selected: '+j.name,'s');
+  S.step=0;
+  go('schedule');
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+/* ═══════════════════════════════════════════════
+   SCREEN: EXOTEL DASHBOARD
+   ═══════════════════════════════════════════════ */
+function renderExDash(){
+  return`<div class="ph"><div class="ph-row"><div class="ph-icon" style="background:var(--ex);color:#fff;font-size:1rem;font-weight:800;border-radius:6px">X</div><div><div class="ph-title">Exotel Engage</div><div class="ph-detail">Multi-channel journey execution & monitoring platform</div></div></div>
+  <div class="ph-actions"><button class="btn btn-brand" onclick="S.ctx={type:'full',name:'',count:0,source:''};go('schedule')">▶ New Execution</button></div></div>
+  <div class="cnt"><div class="g4" style="margin-bottom:.75rem">
+    <div class="mc"><div class="mc-top"><div><div class="mc-label">Active Journeys</div><div class="mc-val">12</div><div class="mc-sub">+3 this week</div></div><div class="mc-ic" style="background:var(--ex-bg);color:var(--ex)">⛗</div></div></div>
+    <div class="mc"><div class="mc-top"><div><div class="mc-label">Contacts Reached</div><div class="mc-val">1.2M</div><div class="mc-sub">+18% vs last month</div></div><div class="mc-ic" style="background:#e3f2fd;color:#1565c0">☷</div></div></div>
+    <div class="mc"><div class="mc-top"><div><div class="mc-label">Executions Today</div><div class="mc-val">8</div><div class="mc-sub">3 running, 5 completed</div></div><div class="mc-ic" style="background:#caf1d8;color:var(--success)">▶</div></div></div>
+    <div class="mc"><div class="mc-top"><div><div class="mc-label">Avg Response Rate</div><div class="mc-val">47.3%</div><div class="mc-sub">+2.1% improvement</div></div><div class="mc-ic" style="background:#fef0cd;color:#8c4b02">↑</div></div></div>
+  </div>
+  <div class="g21">
+    <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">⚙</div><div><div class="card-t">Recent Executions</div><div class="card-st">3 of 12 executions</div></div></div><div class="card-st"><a onclick="go('monitor')">View All</a></div></div><div class="card-bnp">
+      <div class="exec-row" onclick="go('monitor')"><div class="si" style="background:#caf1d8;color:var(--success)">▶</div><div class="info"><div class="nm">Q2 Collections Campaign</div><div class="mt"><span class="jid">BJ-2026-04-0847</span> · 108.5K contacts · 3 hrs ago</div></div><div style="width:6rem;flex-shrink:0"><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:.5rem;color:var(--success);font-weight:600">Running</span><span style="font-size:.5rem;color:var(--txt2)">62%</span></div><div class="pbar" style="height:3px"><div class="pbar-v" style="width:62%;background:var(--success)"></div></div></div></div>
+      <div class="exec-row" onclick="go('monitor')"><div class="si" style="background:#d8edff;color:var(--brand)">✓</div><div class="info"><div class="nm">Welcome Series — New Users</div><div class="mt"><span class="jid">BJ-2026-04-0901</span> · 45.2K contacts · 8 hrs ago</div></div><div style="width:6rem;flex-shrink:0"><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:.5rem;color:var(--brand);font-weight:600">Done</span><span style="font-size:.5rem;color:var(--txt2)">100%</span></div><div class="pbar" style="height:3px"><div class="pbar-v" style="width:100%;background:var(--brand)"></div></div></div></div>
+      <div class="exec-row"><div class="si" style="background:#fef0cd;color:#8c4b02">⏰</div><div class="info"><div class="nm">Upsell Premium Plan</div><div class="mt"><span class="jid">BJ-2026-04-0923</span> · 32.1K contacts · Starts tomorrow</div></div><div style="width:6rem;flex-shrink:0"><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:.5rem;color:#8c4b02;font-weight:600">Scheduled</span><span style="font-size:.5rem;color:var(--txt2)">0%</span></div><div class="pbar" style="height:3px"><div class="pbar-v" style="width:0%"></div></div></div></div>
+    </div></div>
+    <div>
+      <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">⛗</div><div><div class="card-t">Available Journeys</div></div></div></div><div class="card-bnp">${
+        D.journeys.slice(0,3).map(j=>`<div class="exec-row" onclick="S.selJourney='${j.id}';S.ctx={type:'full',name:'',count:0,source:''};go('schedule')"><div class="si" style="background:var(--ex-bg);color:var(--ex)">⛗</div><div class="info"><div class="nm">${j.name}</div><div class="mt jid">${j.id}</div></div><span class="badge badge-s" style="font-size:.5rem"><span class="dot" style="background:var(--success)"></span>Ready</span></div>`).join('')
+      }</div></div>
+      <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:#d8edff;color:var(--brand)">▶</div><div class="card-t">Quick Actions</div></div></div><div class="card-bnp">
+        <div class="exec-row" onclick="S.ctx={type:'full',name:'',count:0,source:''};go('schedule')"><div style="color:var(--txt2)">▶</div><div class="info"><div class="nm">New Execution</div><div class="mt">Schedule & run a journey</div></div><span style="color:#bbb">›</span></div>
+        <div class="exec-row" onclick="go('contacts')"><div style="color:var(--txt2)">👤</div><div class="info"><div class="nm">Select Contacts</div><div class="mt">Pick contacts then run</div></div><span style="color:#bbb">›</span></div>
+        <div class="exec-row" onclick="go('reports')"><div style="color:var(--txt2)">📊</div><div class="info"><div class="nm">From Report</div><div class="mt">Use a report as audience</div></div><span style="color:#bbb">›</span></div>
+        <div class="exec-row" onclick="go('monitor')"><div style="color:var(--txt2)">⚙</div><div class="info"><div class="nm">Live Monitor</div><div class="mt">Check running executions</div></div><span style="color:#bbb">›</span></div>
+      </div></div>
+    </div>
+  </div></div>`;
+}
+
+/* ═══════════════════════════════════════════════
+   SCREEN: EXECUTION WIZARD (context-aware)
+   ═══════════════════════════════════════════════ */
+function renderSchedule(){
+  const j=D.journeys.find(x=>x.id===S.selJourney)||D.journeys[0];
+  const ctx=S.ctx;
+  let ctxBanner='';
+  if(ctx.type==='single'){
+    ctxBanner=`<div class="alert-box ab-i" style="margin:0 0 .75rem"><strong>Single Contact:</strong> ${ctx.name} · This execution will target 1 contact.</div>`;
+  }else if(ctx.type==='list'){
+    ctxBanner=`<div class="alert-box ab-i" style="margin:0 0 .75rem"><strong>Selected Contacts:</strong> ${ctx.count} contacts from manual selection.</div>`;
+  }else if(ctx.type==='report'){
+    ctxBanner=`<div class="alert-box ab-i" style="margin:0 0 .75rem"><strong>From Report:</strong> ${ctx.name} · ${ctx.count.toLocaleString()} contacts.</div>`;
+  }
+
+  return`<div class="bcrumb"><a onclick="go('exDash')">Exotel Home</a><span>›</span><span style="color:var(--txt)">Journey Execution</span></div>
+  <div class="ph"><div class="ph-row"><div class="ph-icon" style="background:var(--ex);color:#fff;font-size:.75rem;font-weight:800;border-radius:6px">X</div><div><div class="ph-title">${j.name}</div><div class="ph-detail">Journey <span style="font-family:monospace;color:var(--ex);font-weight:600">${j.id}</span> · Configure and review before execution</div></div></div></div>
+  <div style="padding:.375rem 1.5rem;background:#fff;border-bottom:1px solid var(--bdr)"><div class="path" id="wizPath">${
+    ['Schedule','Source','Intelligence'].map((l,i)=>`<div class="path-i${i<S.step?' done':i===S.step?' cur':''}" onclick="S.step=${i};go('schedule')"><div class="path-n">${i<S.step?'✓':(i+1)}</div>${l}</div>`).join('')
+  }</div></div>
+  <div class="cnt">${ctxBanner}${S.step===0?scheduleHTML():S.step===1?sourceHTML():intelHTML()}</div>
+  <div style="padding:.375rem 1.5rem .625rem;display:flex;justify-content:space-between">
+    <button class="btn" onclick="${S.step===0?'go(\"exDash\")':'S.step--;go(\"schedule\")'}">${S.step===0?'← Cancel':'← Previous'}</button>
+    ${S.step<2?`<button class="btn btn-brand" onclick="S.step++;go('schedule')">${S.step===1?'Review Intelligence →':'Mark as Complete →'}</button>`:''}
+  </div>`;
+}
+
+function scheduleHTML(){
+  const isSingle=S.ctx.type==='single';
+  return`<div style="max-width:48rem;margin:0 auto">
+  <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:#d8edff;color:var(--brand)">🕐</div><div><div class="card-t">Execution Type</div><div class="card-st">Choose how this journey should be executed</div></div></div></div><div class="card-b"><div class="g2"><div class="tc${isSingle?' sel':''}" onclick="tcSel(this)"><div class="tc-h"><div class="tc-ic" style="background:#fafafb;color:#706e6b">📅</div><div><div class="tc-t">One-Time Execution</div><div style="font-size:.5625rem;color:var(--txt2)">${isSingle?'For single contact':'For CRM batch uploads'}</div></div></div><div class="tc-d">${isSingle?'Execute journey immediately for the selected contact.':'Define a specific start time. Ends upon completion of all contacts.'}</div></div><div class="tc${isSingle?'':' sel'}" onclick="tcSel(this)"><div class="tc-h"><div class="tc-ic" style="background:#d8edff;color:var(--brand)">🔄</div><div><div class="tc-t">Recurring Execution</div></div></div><div class="tc-d">Configure a cron-like schedule for continuous CRM data processing.</div></div></div>
+  <div class="alert-box ab-w">⚠ <strong>Immediate execution is not allowed.</strong> All executions must be scheduled with a defined start time.</div></div></div>
+  <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:#d8edff;color:var(--brand)">🕑</div><div class="card-t">Schedule Configuration</div></div></div><div class="card-b"><div class="g2"><div><label style="font-size:.625rem;font-weight:500;color:var(--txt2);display:block;margin-bottom:3px">Start Date</label><input type="date" value="2026-04-07" style="width:100%;padding:5px 7px;border:1px solid #dddbda;border-radius:var(--r);font-size:.75rem;font-family:inherit"></div><div><label style="font-size:.625rem;font-weight:500;color:var(--txt2);display:block;margin-bottom:3px">Start Time</label><input type="time" value="09:00" style="width:100%;padding:5px 7px;border:1px solid #dddbda;border-radius:var(--r);font-size:.75rem;font-family:inherit"></div></div>
+  ${!isSingle?`<div style="margin-top:.75rem"><div style="font-size:.625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:.25rem">Frequency</div><div class="g4" style="gap:.375rem"><div class="tc sel" style="padding:.375rem;text-align:center;font-size:.6875rem" onclick="tcSel(this)">Daily</div><div class="tc" style="padding:.375rem;text-align:center;font-size:.6875rem" onclick="tcSel(this)">Weekly</div><div class="tc" style="padding:.375rem;text-align:center;font-size:.6875rem" onclick="tcSel(this)">Monthly</div><div class="tc" style="padding:.375rem;text-align:center;font-size:.6875rem" onclick="tcSel(this)">Custom</div></div></div>`:''}</div></div>
+  ${!isSingle?`<div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:#d8edff;color:var(--brand)">📁</div><div class="card-t">Data Processing Mode</div></div></div><div class="card-b"><div class="g2"><div class="tc sel" onclick="tcSel(this)"><div class="tc-h"><span style="color:var(--brand)">🔄</span><div class="tc-t">Incremental Mode</div></div><div class="tc-d">Process only <strong>new data</strong> from CRM since last run.</div><div style="display:flex;gap:3px;margin-top:.25rem"><span class="tag tag-s">Recommended</span><span class="tag tag-n">Low resource</span></div></div><div class="tc" onclick="tcSel(this)"><div class="tc-h"><span style="color:#706e6b">📁</span><div class="tc-t">Full Re-run Mode</div></div><div class="tc-d">Reprocess the <strong>entire CRM dataset</strong> every run.</div><div style="display:flex;gap:3px;margin-top:.25rem"><span class="tag tag-w">High resource</span></div></div></div></div></div>`:''}</div>`;
+}
+
+function sourceHTML(){
+  const ctx=S.ctx;
+  const src=ctx.type==='single'?'Single Contact':ctx.type==='report'?'Salesforce Report':ctx.type==='list'?'Manual Selection':'CRM (Salesforce)';
+  return`<div style="max-width:48rem;margin:0 auto">
+  <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:#d8edff;color:var(--brand)">📁</div><div class="card-t">Input Source</div></div></div><div class="card-b"><div class="g2">
+    <div class="tc sel"><div class="tc-h"><div class="tc-ic" style="background:#d8edff;color:var(--brand)">📁</div><div><div class="tc-t">${src}</div><div style="font-size:.5rem;color:var(--brand);font-weight:500">Selected</div></div></div><div class="tc-d">${
+      ctx.type==='single'?`Targeting: <strong>${ctx.name}</strong>`:
+      ctx.type==='report'?`Report: <strong>${ctx.name}</strong> (${ctx.count.toLocaleString()} contacts)`:
+      ctx.type==='list'?`${ctx.count} manually selected contacts`:
+      'Pull audience data directly from your Salesforce CRM instance.'
+    }</div></div>
+    <div class="tc dis"><div class="tc-h"><div class="tc-ic" style="background:#fafafb;color:#706e6b">📄</div><div><div class="tc-t" style="color:#706e6b">Excel Upload</div><div style="font-size:.5rem;color:var(--txt2)">🔒 Unavailable</div></div></div><div class="tc-d">Cannot combine with CRM source.</div></div></div>
+    <div class="alert-box ab-i">ℹ <strong>Single source constraint:</strong> Only one input source per execution.</div></div></div>
+  ${ctx.type!=='single'?`<div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">☰</div><div class="card-t">Ingestion Configuration</div></div></div><div class="card-b"><div class="g2"><div class="tc" onclick="tcSel(this)"><div class="tc-h"><span style="color:#706e6b">⚡</span><div class="tc-t">Real-time Trigger</div></div><div class="tc-d">Event-based triggers as they occur.</div><div style="margin-top:.25rem"><span class="tag tag-w">Event-driven</span></div></div><div class="tc sel" onclick="tcSel(this)"><div class="tc-h"><span style="color:var(--brand)">☰</span><div class="tc-t">Batch Ingestion</div></div><div class="tc-d">Bulk transfers at scheduled intervals.</div><div style="margin-top:.25rem"><span class="tag tag-ex">High throughput</span></div></div></div></div></div>`:''}
+  <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:#caf1d8;color:var(--success)">🛡</div><div><div class="card-t">Data Safeguards</div><div class="card-st">Automatic protections</div></div></div></div><div class="card-b">
+    <div class="sg"><div class="sg-ic">🛡</div><div class="sg-info"><div class="sg-nm">Queue Buffering <span class="badge badge-s" style="font-size:.4375rem;vertical-align:middle">MANDATORY</span></div><div class="sg-desc">Handles sudden CRM data spikes</div></div><div class="sg-tog"></div></div>
+    <div class="sg"><div class="sg-ic">✓</div><div class="sg-info"><div class="sg-nm">Auto-Deduplication <span class="badge badge-s" style="font-size:.4375rem;vertical-align:middle">MANDATORY</span></div><div class="sg-desc">Removes duplicate contacts</div></div><div class="sg-tog"></div></div>
+    <div class="sg"><div class="sg-ic">🛡</div><div class="sg-info"><div class="sg-nm">Skip Active Journey <span class="badge badge-s" style="font-size:.4375rem;vertical-align:middle">MANDATORY</span></div><div class="sg-desc">Contacts already in a journey are excluded</div></div><div class="sg-tog"></div></div>
+  </div></div></div>`;
+}
+
+function intelHTML(){
+  const ctx=S.ctx;
+  const j=D.journeys.find(x=>x.id===S.selJourney)||D.journeys[0];
+  const isSingle=ctx.type==='single';
+  const total=isSingle?1:ctx.type==='report'?ctx.count:ctx.type==='list'?ctx.count:108500;
+  const valid=isSingle?1:Math.round(total*0.868);
+  const actions=isSingle?j.channels.length:Math.round(valid*1.4);
+  const cost=isSingle?'₹1.77':'₹'+(actions*0.46).toLocaleString();
+
+  return`<div style="max-width:72rem;margin:0 auto">
+  <div class="intel-hero"><div style="width:32px;height:32px;border-radius:6px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.875rem;font-weight:800;flex-shrink:0">X</div><div><div style="font-weight:700;font-size:.8125rem">Pre-Execution Intelligence Summary</div><div style="font-size:.625rem;opacity:.8">Exotel · Mandatory review gate before execution${isSingle?' · Single-contact mode':''}</div></div></div>
+  <div class="g2">
+    <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">A</div><div class="card-t">Audience Summary</div></div></div><div class="card-b"><div class="g2" style="margin-bottom:.5rem"><div class="im"><div class="im-l">Total Records</div><div class="im-v">${total.toLocaleString()}</div></div><div class="im" style="background:#caf1d8"><div class="im-l" style="color:#194e31">Valid Contacts</div><div class="im-v" style="color:#194e31">${valid.toLocaleString()}</div></div>${!isSingle?`<div class="im" style="background:#fdd"><div class="im-l" style="color:#8e030f">Invalid</div><div class="im-v" style="color:#8e030f">${Math.round(total*0.052).toLocaleString()}</div></div><div class="im" style="background:#fef0cd"><div class="im-l" style="color:#8c4b02">Deduplicated</div><div class="im-v" style="color:#8c4b02">${Math.round(total*0.062).toLocaleString()}</div></div>`:''}</div>
+    <div style="font-size:.5625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;margin:6px 0 3px">Channel Availability</div>
+    ${j.channels.map((ch,i)=>{const pct=isSingle?100:[80,60,40][i]||50;return`<div style="display:flex;align-items:center;gap:.375rem;margin-bottom:.375rem">${chIcon(ch,true)}<div style="flex:1;height:5px;background:#ecebea;border-radius:15px;overflow:hidden"><div style="height:100%;width:${pct}%;border-radius:15px;background:${['#2e7d32','#5e35b1','#e65100','#1565c0'][i]||'#999'}"></div></div><span style="font-size:.625rem;font-weight:600;width:3.5rem;text-align:right">${isSingle?'1':Math.round(valid*pct/100).toLocaleString()}</span></div>`;}).join('')}
+    </div></div>
+    <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">B</div><div class="card-t">Journey Explosion</div></div></div><div class="card-b"><div class="exp-dk"><div style="font-size:.5625rem;color:#b0c4de">Grand Total Actions</div><div style="font-size:1.125rem;font-weight:700;margin:.125rem 0 0">${actions.toLocaleString()}</div><div style="font-size:.5625rem;color:#8da7c4">From ${valid.toLocaleString()} contact${valid>1?'s':''}</div></div>
+    ${j.channels.map((ch,i)=>{const vol=isSingle?1:Math.round(actions*[0.57,0.29,0.14][i]);return`<div style="display:flex;align-items:center;gap:.375rem;padding:.375rem;background:#fafafb;border-radius:var(--r);margin-bottom:.25rem">${chIcon(ch,true)}<div style="flex:1"><div style="font-size:.5625rem;color:var(--txt2)">${ch}</div><div style="font-weight:700;font-size:.8125rem">${vol.toLocaleString()}</div></div></div>`;}).join('')}
+    ${j.channels.length>1?`<div style="margin-top:.5rem"><div style="font-size:.5625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px">Fallback Chains</div>${j.channels.slice(0,-1).map((ch,i)=>`<div class="fb-row"><span class="badge badge-s" style="font-size:.5rem">${ch}</span><span style="color:#8c4b02">→</span><span class="badge badge-ex" style="font-size:.5rem">${j.channels[i+1]}</span></div>`).join('')}</div>`:''}</div></div>
+    <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">C</div><div class="card-t">System Load</div></div></div><div class="card-b"><table class="tbl"><thead><tr><th>Channel</th><th class="r">Req TPS</th><th class="r">Cap TPS</th><th style="text-align:center">Status</th></tr></thead><tbody>${
+      j.channels.map((ch,i)=>{const req=isSingle?1:[145,72,38][i]||20;const cap=[200,150,30,100][i]||100;const ok=req<=cap;return`<tr><td>${chIcon(ch)}</td><td class="r b">${req}</td><td class="r">${cap}</td><td style="text-align:center"><span class="badge ${ok?'badge-s':'badge-e'}"><span class="dot" style="background:${ok?'var(--success)':'var(--err)'}"></span>${ok?'OK':'Overload'}</span></td></tr>`;}).join('')
+    }</tbody></table>${isSingle?'':'<div class="alert-box ab-e" style="margin-top:.5rem">⚠ <strong>Capacity overload:</strong> Call channel exceeds capacity.</div>'}</div></div>
+    <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:#caf1d8;color:var(--success)">E</div><div><div class="card-t">Cost Estimation</div></div></div></div><div class="card-b"><div class="cost-g"><div style="font-size:.5625rem;opacity:.8">Total Estimated Cost</div><div style="font-size:1.125rem;font-weight:700;margin:.125rem 0 0">${cost}</div></div><table class="tbl"><thead><tr><th>Channel</th><th class="r">Unit</th><th class="r">Volume</th><th class="r">Total</th></tr></thead><tbody>${
+      j.channels.map((ch,i)=>{const unit=[0.45,0.12,1.20,0.10][i]||0.5;const vol=isSingle?1:Math.round(actions*[0.57,0.29,0.14][i]);return`<tr><td>${chIcon(ch)}</td><td class="r">₹${unit.toFixed(2)}</td><td class="r">${vol.toLocaleString()}</td><td class="r b">₹${(unit*vol).toLocaleString()}</td></tr>`;}).join('')
+    }</tbody></table></div></div>
+  </div>
+  <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">G</div><div class="card-t">Execution Controls</div></div></div><div class="card-b"><div class="g2"><div><div style="font-size:.5625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px">Scheduled Start</div><div class="g2"><div><label style="font-size:.5625rem;color:var(--txt2)">Date</label><input type="date" value="2026-04-07" style="width:100%;padding:4px 6px;border:1px solid #dddbda;border-radius:var(--r);font-size:.75rem;font-family:inherit"></div><div><label style="font-size:.5625rem;color:var(--txt2)">Time</label><input type="time" value="09:00" style="width:100%;padding:4px 6px;border:1px solid #dddbda;border-radius:var(--r);font-size:.75rem;font-family:inherit"></div></div></div><div><div style="font-size:.5625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px">Throttling</div><div style="padding:.5rem;background:#fafafb;border:1px solid #f0f0f0;border-radius:var(--r)"><div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:.625rem"><span>Speed</span><span style="font-weight:700;color:var(--ex)">75%</span></div><input type="range" min="10" max="100" value="75" style="width:100%"></div></div></div></div></div>
+  <div class="af"><div><div style="font-weight:600;font-size:.75rem">Ready to execute?</div><div style="font-size:.625rem;color:var(--txt2)">${valid.toLocaleString()} contacts · ${actions.toLocaleString()} actions · ${cost} est. cost</div></div><div style="display:flex;gap:.375rem"><button class="btn" onclick="go('exDash')">Cancel</button><button class="btn btn-ex" onclick="openDryRun()">👁 Dry Run</button><button class="btn btn-success" onclick="toast('Execution submitted successfully!','s');setTimeout(()=>go('monitor'),600)">▶ Execute</button></div></div></div>`;
+}
+
+/* ═══ TYPE CARD SELECTION ═══ */
+function tcSel(el){
+  const parent=el.parentElement;
+  parent.querySelectorAll('.tc').forEach(e=>e.classList.remove('sel'));
+  if(!el.classList.contains('dis'))el.classList.add('sel');
+}
+
+/* ═══════════════════════════════════════════════
+   DRY RUN MODAL
+   ═══════════════════════════════════════════════ */
+let simInt;
+function openDryRun(){
+  const j=D.journeys.find(x=>x.id===S.selJourney)||D.journeys[0];
+  const ctx=S.ctx;
+  const total=ctx.type==='single'?1:ctx.type==='report'?ctx.count:ctx.type==='list'?ctx.count:108500;
+  const m=document.getElementById('dryModalInner');
+  m.innerHTML=`<div class="modal-hd"><div class="modal-ht"><div style="width:24px;height:24px;border-radius:4px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.625rem;font-weight:800">X</div><div><div style="font-weight:700;font-size:.8125rem">Dry Run Simulation</div><div style="font-size:.5625rem;opacity:.75">Exotel · No actual messages will be sent</div></div></div><button class="modal-x" onclick="closeDryRun()">×</button></div>
+  <div class="modal-bd">
+    <div id="simPhase" style="text-align:center;padding:1.5rem 0"><div style="font-size:1.5rem;animation:spin 1s linear infinite;display:inline-block;margin-bottom:.5rem">◠</div><div style="font-weight:600;font-size:.8125rem">Simulating Journey Execution...</div><div style="font-size:.6875rem;color:var(--txt2);margin:.25rem 0 .75rem">Processing ${total.toLocaleString()} contact${total>1?'s':''}</div><div style="width:12rem;margin:0 auto"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:.5625rem;color:var(--txt2)">Progress</span><span style="font-size:.5625rem;font-weight:600;color:var(--ex)" id="simPct">0%</span></div><div class="pbar"><div class="pbar-v" style="background:var(--ex);width:0%" id="simBar"></div></div></div></div>
+    <div id="simResults" style="display:none">
+      <div class="alert-box ab-s" style="margin:0 0 .75rem">✓ <div><strong>Dry Run Complete</strong><br>Simulation finished. No messages were sent.</div></div>
+      <div class="g3" style="margin-bottom:.75rem">${j.channels.map((ch,i)=>{const vol=ctx.type==='single'?1:Math.round(total*0.868*[0.57,0.29,0.14][i]);return`<div class="im" style="text-align:center">${chIcon(ch,true)}<div class="im-v" style="margin-top:.25rem">${vol.toLocaleString()}</div><div class="im-l">${ch}</div></div>`;}).join('')}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.625rem;background:#fafafb;border:1px solid #f0f0f0;border-radius:var(--r)"><div style="display:flex;gap:.25rem;flex-wrap:wrap">${j.channels.map((ch,i)=>{const vol=ctx.type==='single'?1:Math.round(total*0.868*[0.57,0.29,0.14][i]);const unit=[0.45,0.12,1.20,0.10][i];return`<span class="badge badge-s" style="font-size:.5rem">${ch}: ₹${(vol*unit).toLocaleString()}</span>`;}).join('')}</div><div style="text-align:right"><div style="font-size:.5rem;color:var(--txt2)">Total</div><div style="font-size:1rem;font-weight:700">₹${Math.round(total*0.868*0.46).toLocaleString()}</div></div></div>
+    </div>
+  </div>
+  <div class="modal-ft"><button class="btn" onclick="closeDryRun()">Close</button><button class="btn btn-brand" id="dryProceed" style="display:none" onclick="closeDryRun();toast('Execution submitted!','s');setTimeout(()=>go('monitor'),500)">Proceed to Execute →</button></div>`;
+  document.getElementById('dryModal').classList.add('open');
+  let p=0;
+  simInt=setInterval(()=>{
+    p+=5;if(p>=100){clearInterval(simInt);p=100;setTimeout(()=>{document.getElementById('simPhase').style.display='none';document.getElementById('simResults').style.display='';document.getElementById('dryProceed').style.display='';},250);}
+    document.getElementById('simPct').textContent=p+'%';document.getElementById('simBar').style.width=p+'%';
+  },100);
+}
+function closeDryRun(){clearInterval(simInt);closeModal('dryModal');}
+
+/* ═══════════════════════════════════════════════
+   SCREEN: LIVE MONITOR
+   ═══════════════════════════════════════════════ */
+function renderMonitor(){
+  const ctx=S.ctx;
+  const j=D.journeys.find(x=>x.id===S.selJourney)||D.journeys[0];
+  return`<div class="bcrumb"><a onclick="go('exDash')">Exotel Home</a><span>›</span><span style="color:var(--txt)">Live Monitor</span></div>
+  <div class="ph"><div class="ph-row"><div class="ph-icon" style="background:var(--ex);color:#fff;font-size:.75rem;font-weight:800;border-radius:6px">X</div><div><div class="ph-title" style="display:flex;align-items:center;gap:.5rem">${j.name} <span class="badge badge-s"><span class="dot" style="background:var(--success)"></span>Running</span></div><div class="ph-detail">Started 187 min ago · Elapsed: <span style="font-weight:600">03:07:00</span></div></div></div>
+  <div class="ph-actions"><button class="btn btn-destruct" id="pauseBtn" onclick="togglePause()">⏸ Pause</button></div></div>
+  <div class="cnt">
+    <div style="margin-bottom:.625rem">
+      <div class="notify notify-w">⚠ Call channel approaching capacity (93%)<span class="notify-time">2 min ago</span></div>
+      <div class="notify notify-e">⚠ WhatsApp vendor latency spike (avg 450ms)<span class="notify-time">8 min ago</span></div>
+      <div class="notify notify-s">✓ SMS delivery rate recovered to 98.2%<span class="notify-time">15 min ago</span></div>
+    </div>
+    <div class="g5" style="margin-bottom:.625rem">
+      <div class="mc"><div class="mc-label">Processed</div><div class="mc-val">67,240</div><div class="mc-sub">of 108,500</div></div>
+      <div class="mc"><div class="mc-label">Progress</div><div class="mc-val">62%</div></div>
+      <div class="mc"><div class="mc-label">Success Rate</div><div class="mc-val" style="color:var(--success)">89.3%</div></div>
+      <div class="mc"><div class="mc-label">Failure Rate</div><div class="mc-val" style="color:var(--destruct)">10.7%</div></div>
+      <div class="mc"><div class="mc-label">Current TPS</div><div class="mc-val" style="font-size:.875rem">WA:142 SM:68 C:28</div></div>
+    </div>
+    <div class="g21">
+      <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">⚙</div><div class="card-t">Real-time TPS</div></div><div class="live-d"><div class="pulse"></div>Live</div></div><div class="card-b"><div class="chart-box"><canvas id="tpsChart"></canvas></div></div></div>
+      <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">☷</div><div class="card-t">Channel Distribution</div></div></div><div class="card-b"><div class="pie-box"><canvas id="pieChart"></canvas></div>
+        <div style="margin-top:.5rem">
+          <div style="display:flex;align-items:center;gap:.25rem;padding:.25rem;background:#fafafb;border-radius:var(--r);margin-bottom:.25rem"><span class="ch ch-wa"><span class="ch-i">WA</span></span><span style="flex:1;font-size:.625rem;font-weight:500">52,400</span><span class="badge badge-s" style="font-size:.5rem">48.7K</span><span class="badge badge-e" style="font-size:.5rem">3.7K</span></div>
+          <div style="display:flex;align-items:center;gap:.25rem;padding:.25rem;background:#fafafb;border-radius:var(--r);margin-bottom:.25rem"><span class="ch ch-sms"><span class="ch-i">SM</span></span><span style="flex:1;font-size:.625rem;font-weight:500">12,800</span><span class="badge badge-s" style="font-size:.5rem">11.9K</span><span class="badge badge-e" style="font-size:.5rem">900</span></div>
+          <div style="display:flex;align-items:center;gap:.25rem;padding:.25rem;background:#fafafb;border-radius:var(--r)"><span class="ch ch-call"><span class="ch-i">CA</span></span><span style="flex:1;font-size:.625rem;font-weight:500">2,040</span><span class="badge badge-s" style="font-size:.5rem">1.6K</span><span class="badge badge-e" style="font-size:.5rem">410</span></div>
+        </div>
+      </div></div>
+    </div>
+    <div class="card" style="margin-top:.625rem"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">⏱</div><div><div class="card-t">Per-Contact Timeline</div><div class="card-st">Click to expand</div></div></div></div><div class="card-b">${
+      [{id:'mc1',ini:'RK',nm:'Rajesh Kumar',mt:'C001 · +91 98765 43210',dots:['var(--brand)','var(--success)','var(--ex)','var(--success)'],badge:['badge-s','Replied'],
+        tl:[{c:'tl-b',ch:'ch-wa',ci:'WA',t:'WhatsApp Sent',b:'badge-b',bs:'sent',time:'09:00:12'},{c:'tl-g',ch:'ch-wa',ci:'WA',t:'WhatsApp Delivered',b:'badge-s',bs:'delivered',time:'09:00:15'},{c:'tl-p',ch:'ch-wa',ci:'WA',t:'WhatsApp Read',b:'badge-ex',bs:'read',time:'09:05:22'},{c:'tl-g',ch:'ch-wa',ci:'WA',t:'WhatsApp Replied',b:'badge-s',bs:'replied',time:'09:07:45'}]},
+       {id:'mc2',ini:'PS',nm:'Priya Sharma',mt:'C002 · +91 87654 32109',dots:['var(--brand)','var(--success)','var(--err)','var(--brand)','var(--success)'],badge:['badge-s','SMS Delivered'],
+        tl:[{c:'tl-r',ch:'ch-wa',ci:'WA',t:'No Reply (Timeout)',b:'badge-e',bs:'failed',time:'11:00:18'},{c:'tl-b',ch:'ch-sms',ci:'SM',t:'SMS Fallback Sent',b:'badge-b',bs:'sent',time:'11:01:02'},{c:'tl-g',ch:'ch-sms',ci:'SM',t:'SMS Delivered',b:'badge-s',bs:'delivered',time:'11:01:08'}]},
+       {id:'mc3',ini:'AP',nm:'Amit Patel',mt:'C003 · +91 76543 21098',dots:['var(--err)','var(--err)','var(--brand)','var(--success)'],badge:['badge-s','Call Connected'],
+        tl:[{c:'tl-r',ch:'ch-wa',ci:'WA',t:'WhatsApp Failed',b:'badge-e',bs:'failed',time:''},{c:'tl-r',ch:'ch-sms',ci:'SM',t:'SMS Failed',b:'badge-e',bs:'failed',time:''},{c:'tl-g',ch:'ch-call',ci:'CA',t:'Call Connected',b:'badge-s',bs:'connected',time:'13:00:25'}]}
+      ].map(ct=>`<div class="cr" id="${ct.id}"><div class="cr-h" onclick="document.getElementById('${ct.id}').classList.toggle('open')"><span style="color:#bbb;font-size:.5rem">▸</span><div class="cr-av">${ct.ini}</div><div class="cr-info"><div class="cr-nm">${ct.nm} <span class="cr-mt">${ct.mt}</span></div></div><div class="sd">${ct.dots.map(d=>`<span class="sd-d" style="background:${d}"></span>`).join('')}</div><span class="badge ${ct.badge[0]}" style="font-size:.5rem">${ct.badge[1]}</span></div><div class="cr-body">${
+        ct.tl.map(e=>`<div class="tl-e ${e.c}"><span class="ch ${e.ch}"><span class="ch-i">${e.ci}</span></span> <strong>${e.t}</strong> <span class="badge ${e.b}" style="font-size:.5rem">${e.bs}</span>${e.time?` <span style="margin-left:auto;font-size:.5rem;color:var(--txt2)">${e.time}</span>`:''}</div>`).join('')
+      }</div></div>`).join('')
+    }</div></div>
+  </div>`;
+}
+
+function togglePause(){
+  S.paused=!S.paused;
+  const b=document.getElementById('pauseBtn');
+  if(S.paused){b.className='btn btn-brand';b.innerHTML='▶ Resume';toast('Execution paused','w');}
+  else{b.className='btn btn-destruct';b.innerHTML='⏸ Pause';toast('Execution resumed','s');}
+}
+
+/* ═══ CHARTS ═══ */
+function initCharts(){
+  setTimeout(()=>{
+    const tc=document.getElementById('tpsChart');const pc=document.getElementById('pieChart');
+    if(!tc||!pc)return;
+    const l=Array.from({length:20},(_,i)=>(i+1)+'m'),r=(b,v)=>Array.from({length:20},()=>Math.floor(b+Math.random()*v));
+    new Chart(tc,{type:'line',data:{labels:l,datasets:[{label:'WhatsApp',data:r(100,80),borderColor:'#2e7d32',backgroundColor:'rgba(46,125,50,.08)',fill:true,tension:.3,pointRadius:0,borderWidth:1.5},{label:'SMS',data:r(40,50),borderColor:'#5e35b1',backgroundColor:'rgba(94,53,177,.08)',fill:true,tension:.3,pointRadius:0,borderWidth:1.5},{label:'Call',data:r(15,25),borderColor:'#e65100',backgroundColor:'rgba(230,81,0,.08)',fill:true,tension:.3,pointRadius:0,borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:9,family:'inherit'},boxWidth:10}}},scales:{y:{beginAtZero:true,ticks:{font:{size:9}},grid:{color:'#f0f0f0'}},x:{ticks:{font:{size:9}},grid:{display:false}}}}});
+    new Chart(pc,{type:'doughnut',data:{labels:['WhatsApp','SMS','Call'],datasets:[{data:[52400,12800,2040],backgroundColor:['#2e7d32','#5e35b1','#e65100'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false}}}});
+  },50);
+}
+
+/* ═══ INIT ═══ */
+renderNav();renderScreen();
+</script>
+</body>
+</html>

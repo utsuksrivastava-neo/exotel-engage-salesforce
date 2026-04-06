@@ -1,0 +1,147 @@
+<template>
+    <div class="dashboard-root">
+        <!-- Header -->
+        <div class="dash-header">
+            <div>
+                <h2 class="dash-title">Dashboard</h2>
+                <p class="dash-subtitle">Overview of your CRM journey orchestration</p>
+            </div>
+            <lightning-button
+                variant="brand"
+                label="Execute Journey"
+                icon-name="utility:play"
+                onclick={navigateToExecute}
+            ></lightning-button>
+        </div>
+
+        <!-- Stat Cards -->
+        <div class="slds-grid slds-wrap slds-gutters_small stat-grid">
+            <div class="slds-col slds-size_1-of-4">
+                <c-stat-card label="Active Journeys" value="12" subtitle="+3 this week" icon-name="utility:flow" variant="default"></c-stat-card>
+            </div>
+            <div class="slds-col slds-size_1-of-4">
+                <c-stat-card label="Total Contacts Reached" value="1.2M" subtitle="+18% vs last month" icon-name="utility:groups" variant="success"></c-stat-card>
+            </div>
+            <div class="slds-col slds-size_1-of-4">
+                <c-stat-card label="Executions Today" value="8" subtitle="3 running, 5 completed" icon-name="utility:play" variant="purple"></c-stat-card>
+            </div>
+            <div class="slds-col slds-size_1-of-4">
+                <c-stat-card label="Avg. Response Rate" value="47.3%" subtitle="+2.1% improvement" icon-name="utility:trending" variant="warning"></c-stat-card>
+            </div>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="slds-grid slds-gutters_small content-grid">
+            <!-- Recent Executions -->
+            <div class="slds-col slds-size_2-of-3">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-header-left">
+                            <div class="panel-icon panel-icon-blue">
+                                <lightning-icon icon-name="utility:activity" size="x-small"></lightning-icon>
+                            </div>
+                            <div>
+                                <h3 class="panel-title">Recent Executions</h3>
+                                <p class="panel-subtitle">Track ongoing and past journey executions</p>
+                            </div>
+                        </div>
+                        <a class="view-all-link" onclick={navigateToMonitor}>View all</a>
+                    </div>
+                    <div class="exec-list">
+                        <template for:each={executions} for:item="exec">
+                            <div key={exec.journeyId} class="exec-row" onclick={handleExecClick} data-id={exec.journeyId}>
+                                <div class={exec.statusIconClass}>
+                                    <lightning-icon icon-name={exec.statusIcon} size="x-small" variant={exec.iconVariant}></lightning-icon>
+                                </div>
+                                <div class="exec-info">
+                                    <p class="exec-name">{exec.name}</p>
+                                    <p class="exec-meta">
+                                        <span class="exec-jid">{exec.journeyId}</span> &middot; {exec.contacts} contacts &middot; {exec.started}
+                                    </p>
+                                </div>
+                                <div class="exec-progress">
+                                    <div class="exec-progress-header">
+                                        <span class={exec.statusTextClass}>{exec.status}</span>
+                                        <span class="exec-pct">{exec.progress}%</span>
+                                    </div>
+                                    <div class="progress-track">
+                                        <div class={exec.progressBarClass} style={exec.progressStyle}></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="slds-col slds-size_1-of-3">
+                <!-- Available Journeys -->
+                <div class="panel slds-m-bottom_small">
+                    <div class="panel-header">
+                        <div class="panel-header-left">
+                            <div class="panel-icon panel-icon-blue">
+                                <lightning-icon icon-name="utility:flow" size="x-small"></lightning-icon>
+                            </div>
+                            <div>
+                                <h3 class="panel-title">Available Journeys</h3>
+                                <p class="panel-subtitle">Ready to execute from Journey Builder</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="journey-list">
+                        <template for:each={journeys} for:item="j">
+                            <div key={j.id} class="journey-row" onclick={navigateToExecute}>
+                                <div class="journey-icon-box">
+                                    <lightning-icon icon-name="utility:flow" size="x-small"></lightning-icon>
+                                </div>
+                                <div class="journey-info">
+                                    <p class="journey-name">{j.name}</p>
+                                    <p class="journey-jid">{j.id}</p>
+                                </div>
+                                <c-channel-badge variant="success" text="Ready"></c-channel-badge>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-header-left">
+                            <div class="panel-icon panel-icon-blue">
+                                <lightning-icon icon-name="utility:play" size="x-small"></lightning-icon>
+                            </div>
+                            <div>
+                                <h3 class="panel-title">Quick Actions</h3>
+                                <p class="panel-subtitle">Common tasks</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="action-list">
+                        <div class="action-row" onclick={navigateToExecute}>
+                            <div class="action-icon-box">
+                                <lightning-icon icon-name="utility:play" size="x-small"></lightning-icon>
+                            </div>
+                            <div class="action-text">
+                                <p class="action-label">Execute Journey</p>
+                                <p class="action-desc">Schedule &amp; run a journey</p>
+                            </div>
+                            <lightning-icon icon-name="utility:chevronright" size="xx-small" class="action-arrow"></lightning-icon>
+                        </div>
+                        <div class="action-row" onclick={navigateToMonitor}>
+                            <div class="action-icon-box">
+                                <lightning-icon icon-name="utility:activity" size="x-small"></lightning-icon>
+                            </div>
+                            <div class="action-text">
+                                <p class="action-label">View Monitor</p>
+                                <p class="action-desc">Check live executions</p>
+                            </div>
+                            <lightning-icon icon-name="utility:chevronright" size="xx-small" class="action-arrow"></lightning-icon>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

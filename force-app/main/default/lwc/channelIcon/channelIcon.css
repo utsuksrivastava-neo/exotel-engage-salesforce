@@ -1,0 +1,27 @@
+.channel-icon-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.iconbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+}
+.iconbox-small { width: 1.5rem; height: 1.5rem; }
+.iconbox-medium { width: 2rem; height: 2rem; }
+.iconbox-large { width: 2.5rem; height: 2.5rem; }
+.iconbox-green { background: #f0fdf4; }
+.iconbox-violet { background: #f5f3ff; }
+.iconbox-orange { background: #fff7ed; }
+.iconbox-blue { background: #f0f9ff; }
+.icon-green { --sds-c-icon-color-foreground-default: #16a34a; }
+.icon-violet { --sds-c-icon-color-foreground-default: #7c3aed; }
+.icon-orange { --sds-c-icon-color-foreground-default: #ea580c; }
+.icon-blue { --sds-c-icon-color-foreground-default: #0284c7; }
+.icon-label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #334155;
+}

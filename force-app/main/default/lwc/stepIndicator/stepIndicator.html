@@ -1,0 +1,25 @@
+<template>
+    <div class="step-container">
+        <template for:each={computedSteps} for:item="step">
+            <div key={step.index} class="step-item">
+                <div class="step-circle-group">
+                    <div class={step.circleClass}>
+                        <template lwc:if={step.isCompleted}>
+                            <lightning-icon icon-name="utility:check" size="xx-small" variant="inverse"></lightning-icon>
+                        </template>
+                        <template lwc:if={step.showNumber}>
+                            <span>{step.number}</span>
+                        </template>
+                    </div>
+                    <div class="step-text">
+                        <span class={step.labelClass}>{step.label}</span>
+                        <span class={step.descClass}>{step.description}</span>
+                    </div>
+                </div>
+                <template lwc:if={step.showConnector}>
+                    <div class={step.connectorClass}></div>
+                </template>
+            </div>
+        </template>
+    </div>
+</template>

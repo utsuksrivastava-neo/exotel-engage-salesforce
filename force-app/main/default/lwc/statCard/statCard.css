@@ -1,0 +1,40 @@
+.stat-card {
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    padding: 1.25rem;
+}
+.stat-card-body {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+.stat-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #64748b;
+    margin: 0;
+}
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0.25rem 0 0;
+}
+.stat-subtitle {
+    font-size: 0.6875rem;
+    color: #94a3b8;
+    margin: 0.25rem 0 0;
+}
+.stat-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.stat-icon-blue { background: #eff6ff; --sds-c-icon-color-foreground-default: #2563eb; }
+.stat-icon-green { background: #f0fdf4; --sds-c-icon-color-foreground-default: #16a34a; }
+.stat-icon-amber { background: #fffbeb; --sds-c-icon-color-foreground-default: #d97706; }
+.stat-icon-red { background: #fef2f2; --sds-c-icon-color-foreground-default: #dc2626; }
+.stat-icon-purple { background: #f5f3ff; --sds-c-icon-color-foreground-default: #7c3aed; }
