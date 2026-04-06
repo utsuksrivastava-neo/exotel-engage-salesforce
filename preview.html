@@ -162,6 +162,20 @@ a{color:var(--brand);text-decoration:none;cursor:pointer}a:hover{text-decoration
 .ab-e{background:#fdd;color:#8e030f;border:1px solid #fbb}.ab-s{background:#caf1d8;color:#194e31;border:1px solid #7cc294}
 
 .intel-hero{padding:.75rem;border-radius:var(--r);background:var(--ex);color:#fff;display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+.it-tabs{display:flex;gap:0;border-bottom:2px solid #ecebea;margin-bottom:1rem}
+.it-tab{position:relative;padding:.5rem .75rem;font-size:.6875rem;font-weight:600;color:var(--txt2);cursor:pointer;display:flex;align-items:center;gap:.375rem;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s}
+.it-tab:hover{color:var(--txt)}
+.it-tab.it-active{color:var(--ex);border-bottom-color:var(--ex)}
+.it-tab.it-locked{opacity:.45;cursor:not-allowed}
+.it-tab .it-num{width:18px;height:18px;border-radius:50%;background:#ecebea;color:var(--txt2);display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:700;flex-shrink:0}
+.it-tab.it-active .it-num{background:var(--ex);color:#fff}
+.it-tab.it-done .it-num{background:var(--success);color:#fff}
+.it-tab.it-locked .it-num{background:#ecebea;color:#c9c7c5}
+.it-confirm-bar{display:flex;align-items:center;justify-content:space-between;padding:.625rem .75rem;margin-top:.75rem;border-radius:var(--r);background:#fafafb;border:1px solid #ecebea}
+.it-confirm-bar .it-ck{display:flex;align-items:center;gap:.375rem;font-size:.6875rem;font-weight:600;color:var(--txt)}
+.it-confirm-bar .it-ck input[type=checkbox]{width:14px;height:14px;accent-color:var(--ex)}
+.it-confirmed{background:#f0fff4;border-color:#7cc294}
+.it-confirmed .it-ck{color:var(--success)}
 .im{padding:.5rem;border-radius:var(--r);background:#fafafb;border:1px solid #f0f0f0}
 .im-l{font-size:.5625rem;color:var(--txt2);font-weight:500}.im-v{font-size:.875rem;font-weight:700;margin-top:1px}
 .exp-dk{padding:.625rem;border-radius:var(--r);background:#16325c;color:#fff;margin-bottom:.5rem}
@@ -296,7 +310,9 @@ let S={
   step:0,
   selJourney:null,
   paused:false,
-  chartsInit:false
+  chartsInit:false,
+  intelTab:0,
+  intelConfirmed:{}
 };
 
 /* ═══ NAVIGATION ═══ */
@@ -526,7 +542,7 @@ function proceedFromPicker(){
   closeModal('journeyModal');
   const j=D.journeys.find(x=>x.id===S.selJourney);
   toast('Selected: '+j.name,'s');
-  S.step=0;
+  S.step=0;S.intelTab=0;S.intelConfirmed={};
   go('schedule');
 }
 
@@ -552,7 +568,7 @@ function renderExDash(){
     </div></div>
     <div>
       <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">⛗</div><div><div class="card-t">Available Journeys</div></div></div></div><div class="card-bnp">${
-        D.journeys.slice(0,3).map(j=>`<div class="exec-row" onclick="S.selJourney='${j.id}';S.ctx={type:'full',name:'',count:0,source:''};go('schedule')"><div class="si" style="background:var(--ex-bg);color:var(--ex)">⛗</div><div class="info"><div class="nm">${j.name}</div><div class="mt jid">${j.id}</div></div><span class="badge badge-s" style="font-size:.5rem"><span class="dot" style="background:var(--success)"></span>Ready</span></div>`).join('')
+        D.journeys.slice(0,3).map(j=>`<div class="exec-row" onclick="S.selJourney='${j.id}';S.ctx={type:'full',name:'',count:0,source:''};S.step=0;S.intelTab=0;S.intelConfirmed={};go('schedule')"><div class="si" style="background:var(--ex-bg);color:var(--ex)">⛗</div><div class="info"><div class="nm">${j.name}</div><div class="mt jid">${j.id}</div></div><span class="badge badge-s" style="font-size:.5rem"><span class="dot" style="background:var(--success)"></span>Ready</span></div>`).join('')
       }</div></div>
       <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:#d8edff;color:var(--brand)">▶</div><div class="card-t">Quick Actions</div></div></div><div class="card-bnp">
         <div class="exec-row" onclick="S.ctx={type:'full',name:'',count:0,source:''};go('schedule')"><div style="color:var(--txt2)">▶</div><div class="info"><div class="nm">New Execution</div><div class="mt">Schedule & run a journey</div></div><span style="color:#bbb">›</span></div>
@@ -690,6 +706,38 @@ function preExecChecksHTML(j,ctx){
   return html;
 }
 
+function getIntelTabs(){
+  return[
+    {key:'checks',label:'Pre-Execution Checks',icon:'🛡'},
+    {key:'audience',label:'Audience & Channels',icon:'👥'},
+    {key:'explosion',label:'Journey Explosion',icon:'🔀'},
+    {key:'loadcost',label:'System Load & Cost',icon:'⚡'},
+    {key:'execute',label:'Execute',icon:'▶'}
+  ];
+}
+
+function goIntelTab(idx){
+  const tabs=getIntelTabs();
+  if(idx>0 && !S.intelConfirmed[tabs[idx-1].key]){
+    toast('Please confirm the previous step first','w');return;
+  }
+  S.intelTab=idx;go('schedule');
+}
+
+function confirmIntelTab(key){
+  const cb=document.getElementById('ck_'+key);
+  if(cb&&cb.checked){
+    S.intelConfirmed[key]=true;
+    const tabs=getIntelTabs();
+    const curIdx=tabs.findIndex(t=>t.key===key);
+    if(curIdx<tabs.length-1){S.intelTab=curIdx+1;}
+    go('schedule');
+  }else{
+    S.intelConfirmed[key]=false;
+    go('schedule');
+  }
+}
+
 function intelHTML(){
   const ctx=S.ctx;
   const j=D.journeys.find(x=>x.id===S.selJourney)||D.journeys[0];
@@ -698,27 +746,82 @@ function intelHTML(){
   const valid=isSingle?1:Math.round(total*0.868);
   const actions=isSingle?j.channels.length:Math.round(valid*1.4);
   const cost=isSingle?'₹1.77':'₹'+(actions*0.46).toLocaleString();
+  const tabs=getIntelTabs();
+  const t=S.intelTab||0;
+  const curKey=tabs[t].key;
+  const allConfirmed=tabs.slice(0,-1).every(tb=>S.intelConfirmed[tb.key]);
+  const prevConfirmed=t===0||S.intelConfirmed[tabs[t-1].key];
 
-  return`<div style="max-width:72rem;margin:0 auto">
-  <div class="intel-hero"><div style="width:32px;height:32px;border-radius:6px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.875rem;font-weight:800;flex-shrink:0">X</div><div><div style="font-weight:700;font-size:.8125rem">Pre-Execution Intelligence Summary</div><div style="font-size:.625rem;opacity:.8">Exotel · Mandatory review gate before execution${isSingle?' · Single-contact mode':''}</div></div></div>
-  ${preExecChecksHTML(j,ctx)}
-  <div class="g2">
+  let tabBar=`<div class="it-tabs">${tabs.map((tb,i)=>{
+    const done=S.intelConfirmed[tb.key];
+    const active=i===t;
+    const locked=i>0&&!S.intelConfirmed[tabs[i-1].key];
+    return`<div class="it-tab${active?' it-active':''}${done?' it-done':''}${locked?' it-locked':''}" onclick="${locked?'':`goIntelTab(${i})`}"><div class="it-num">${done?'✓':(i+1)}</div>${tb.icon} ${tb.label}</div>`;
+  }).join('')}</div>`;
+
+  let progress=tabs.filter(tb=>S.intelConfirmed[tb.key]).length;
+  let progressBar=`<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem"><div style="flex:1;height:4px;background:#ecebea;border-radius:15px;overflow:hidden"><div style="height:100%;width:${Math.round(progress/(tabs.length-1)*100)}%;background:var(--ex);border-radius:15px;transition:width .3s"></div></div><span style="font-size:.5625rem;font-weight:600;color:var(--ex)">${progress}/${tabs.length-1} confirmed</span></div>`;
+
+  function confirmBar(key,label){
+    const done=S.intelConfirmed[key];
+    return`<div class="it-confirm-bar${done?' it-confirmed':''}"><label class="it-ck"><input type="checkbox" id="ck_${key}" ${done?'checked':''} onchange="confirmIntelTab('${key}')"> ${done?'✓ Confirmed':'I have reviewed'} — ${label}</label>${done?`<span class="badge badge-s" style="font-size:.5rem">✓ Approved</span>`:`<span class="badge badge-w" style="font-size:.5rem">Pending Review</span>`}</div>`;
+  }
+
+  let body='';
+
+  if(curKey==='checks'){
+    body=preExecChecksHTML(j,ctx);
+    body+=confirmBar('checks','Pre-execution checks reviewed and acknowledged');
+  }
+
+  else if(curKey==='audience'){
+    body+=`<div class="g2">
     <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">A</div><div class="card-t">Audience Summary</div></div></div><div class="card-b"><div class="g2" style="margin-bottom:.5rem"><div class="im"><div class="im-l">Total Records</div><div class="im-v">${total.toLocaleString()}</div></div><div class="im" style="background:#caf1d8"><div class="im-l" style="color:#194e31">Valid Contacts</div><div class="im-v" style="color:#194e31">${valid.toLocaleString()}</div></div>${!isSingle?`<div class="im" style="background:#fdd"><div class="im-l" style="color:#8e030f">Invalid</div><div class="im-v" style="color:#8e030f">${Math.round(total*0.052).toLocaleString()}</div></div><div class="im" style="background:#fef0cd"><div class="im-l" style="color:#8c4b02">Deduplicated</div><div class="im-v" style="color:#8c4b02">${Math.round(total*0.062).toLocaleString()}</div></div>`:''}</div>
     <div style="font-size:.5625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;margin:6px 0 3px">Channel Availability</div>
     ${j.channels.map((ch,i)=>{const pctMap={'WhatsApp':80,'SMS':60,'IVR/Voicebot':35,'Agent Call':15,'Email':50};const colMap={'WhatsApp':'#2e7d32','SMS':'#5e35b1','IVR/Voicebot':'#e65100','Agent Call':'#c62828','Email':'#1565c0'};const pct=isSingle?100:(pctMap[ch]||50);return`<div style="display:flex;align-items:center;gap:.375rem;margin-bottom:.375rem">${chIcon(ch,true)}<div style="flex:1;height:5px;background:#ecebea;border-radius:15px;overflow:hidden"><div style="height:100%;width:${pct}%;border-radius:15px;background:${colMap[ch]||'#999'}"></div></div><span style="font-size:.625rem;font-weight:600;width:3.5rem;text-align:right">${isSingle?'1':Math.round(valid*pct/100).toLocaleString()}</span></div>`;}).join('')}
-    </div></div>
-    <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">B</div><div class="card-t">Journey Explosion</div></div></div><div class="card-b"><div class="exp-dk"><div style="font-size:.5625rem;color:#b0c4de">Grand Total Actions</div><div style="font-size:1.125rem;font-weight:700;margin:.125rem 0 0">${actions.toLocaleString()}</div><div style="font-size:.5625rem;color:#8da7c4">From ${valid.toLocaleString()} contact${valid>1?'s':''}</div></div>
+    </div></div></div>`;
+    body+=confirmBar('audience','Audience data and channel availability are correct');
+  }
+
+  else if(curKey==='explosion'){
+    body+=`<div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">B</div><div class="card-t">Journey Explosion</div></div></div><div class="card-b"><div class="exp-dk"><div style="font-size:.5625rem;color:#b0c4de">Grand Total Actions</div><div style="font-size:1.125rem;font-weight:700;margin:.125rem 0 0">${actions.toLocaleString()}</div><div style="font-size:.5625rem;color:#8da7c4">From ${valid.toLocaleString()} contact${valid>1?'s':''}</div></div>
     ${j.channels.map((ch,i)=>{const splitMap={'WhatsApp':0.45,'SMS':0.25,'IVR/Voicebot':0.18,'Agent Call':0.12,'Email':0.30};const vol=isSingle?1:Math.round(actions*(splitMap[ch]||0.2));return`<div style="display:flex;align-items:center;gap:.375rem;padding:.375rem;background:#fafafb;border-radius:var(--r);margin-bottom:.25rem">${chIcon(ch,true)}<div style="flex:1"><div style="font-size:.5625rem;color:var(--txt2)">${ch}</div><div style="font-weight:700;font-size:.8125rem">${vol.toLocaleString()}</div></div></div>`;}).join('')}
-    ${j.channels.length>1?`<div style="margin-top:.5rem"><div style="font-size:.5625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px">Fallback Chains</div>${j.channels.slice(0,-1).map((ch,i)=>`<div class="fb-row"><span class="badge badge-s" style="font-size:.5rem">${ch}</span><span style="color:#8c4b02">→</span><span class="badge badge-ex" style="font-size:.5rem">${j.channels[i+1]}</span></div>`).join('')}</div>`:''}</div></div>
+    ${j.channels.length>1?`<div style="margin-top:.5rem"><div style="font-size:.5625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px">Fallback Chains</div>${j.channels.slice(0,-1).map((ch,i)=>`<div class="fb-row"><span class="badge badge-s" style="font-size:.5rem">${ch}</span><span style="color:#8c4b02">→</span><span class="badge badge-ex" style="font-size:.5rem">${j.channels[i+1]}</span></div>`).join('')}</div>`:''}</div></div>`;
+    body+=confirmBar('explosion','Journey action volumes and fallback chains are acceptable');
+  }
+
+  else if(curKey==='loadcost'){
+    body+=`<div class="g2">
     <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">C</div><div class="card-t">System Load</div></div></div><div class="card-b"><table class="tbl"><thead><tr><th>Channel</th><th class="r">Req TPS</th><th class="r">Cap TPS</th><th style="text-align:center">Status</th></tr></thead><tbody>${
       j.channels.map((ch,i)=>{const reqMap={'WhatsApp':145,'SMS':72,'IVR/Voicebot':22,'Agent Call':8,'Email':50};const capMap={'WhatsApp':200,'SMS':150,'IVR/Voicebot':30,'Agent Call':5,'Email':100};const req=isSingle?1:(reqMap[ch]||20);const cap=capMap[ch]||100;const ok=req<=cap;return`<tr><td>${chIcon(ch)}</td><td class="r b">${req}</td><td class="r">${cap}</td><td style="text-align:center"><span class="badge ${ok?'badge-s':'badge-e'}"><span class="dot" style="background:${ok?'var(--success)':'var(--err)'}"></span>${ok?'OK':'Overload'}</span></td></tr>`;}).join('')
     }</tbody></table>${isSingle?'':'<div class="alert-box ab-e" style="margin-top:.5rem">⚠ <strong>Capacity overload:</strong> Agent Call channel exceeds capacity. Ensure sufficient agents are available.</div>'}</div></div>
-    <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:#caf1d8;color:var(--success)">E</div><div><div class="card-t">Cost Estimation</div></div></div></div><div class="card-b"><div class="cost-g"><div style="font-size:.5625rem;opacity:.8">Total Estimated Cost</div><div style="font-size:1.125rem;font-weight:700;margin:.125rem 0 0">${cost}</div></div><table class="tbl"><thead><tr><th>Channel</th><th class="r">Unit</th><th class="r">Volume</th><th class="r">Total</th></tr></thead><tbody>${
+    <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:#caf1d8;color:var(--success)">₹</div><div><div class="card-t">Cost Estimation</div></div></div></div><div class="card-b"><div class="cost-g"><div style="font-size:.5625rem;opacity:.8">Total Estimated Cost</div><div style="font-size:1.125rem;font-weight:700;margin:.125rem 0 0">${cost}</div></div><table class="tbl"><thead><tr><th>Channel</th><th class="r">Unit</th><th class="r">Volume</th><th class="r">Total</th></tr></thead><tbody>${
       j.channels.map((ch,i)=>{const unitMap={'WhatsApp':0.45,'SMS':0.12,'IVR/Voicebot':1.20,'Agent Call':4.50,'Email':0.10};const splitMap={'WhatsApp':0.45,'SMS':0.25,'IVR/Voicebot':0.18,'Agent Call':0.12,'Email':0.30};const unit=unitMap[ch]||0.5;const vol=isSingle?1:Math.round(actions*(splitMap[ch]||0.2));return`<tr><td>${chIcon(ch)}</td><td class="r">₹${unit.toFixed(2)}</td><td class="r">${vol.toLocaleString()}</td><td class="r b">₹${(unit*vol).toLocaleString()}</td></tr>`;}).join('')
-    }</tbody></table></div></div>
-  </div>
-  <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">G</div><div class="card-t">Execution Controls</div></div></div><div class="card-b"><div class="g2"><div><div style="font-size:.5625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px">Scheduled Start</div><div class="g2"><div><label style="font-size:.5625rem;color:var(--txt2)">Date</label><input type="date" value="2026-04-07" style="width:100%;padding:4px 6px;border:1px solid #dddbda;border-radius:var(--r);font-size:.75rem;font-family:inherit"></div><div><label style="font-size:.5625rem;color:var(--txt2)">Time</label><input type="time" value="09:00" style="width:100%;padding:4px 6px;border:1px solid #dddbda;border-radius:var(--r);font-size:.75rem;font-family:inherit"></div></div></div><div><div style="font-size:.5625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px">Throttling</div><div style="padding:.5rem;background:#fafafb;border:1px solid #f0f0f0;border-radius:var(--r)"><div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:.625rem"><span>Speed</span><span style="font-weight:700;color:var(--ex)">75%</span></div><input type="range" min="10" max="100" value="75" style="width:100%"></div></div></div></div></div>
-  <div class="af"><div><div style="font-weight:600;font-size:.75rem">Ready to execute?</div><div style="font-size:.625rem;color:var(--txt2)">${valid.toLocaleString()} contacts · ${actions.toLocaleString()} actions · ${cost} est. cost</div></div><div style="display:flex;gap:.375rem"><button class="btn" onclick="go('exDash')">Cancel</button><button class="btn btn-ex" onclick="openDryRun()">👁 Dry Run</button><button class="btn btn-success" onclick="toast('Execution submitted successfully!','s');setTimeout(()=>go('monitor'),600)">▶ Execute</button></div></div></div>`;
+    }</tbody></table></div></div></div>`;
+    body+=confirmBar('loadcost','System capacity and cost estimates approved');
+  }
+
+  else if(curKey==='execute'){
+    if(!allConfirmed){
+      const missing=tabs.slice(0,-1).filter(tb=>!S.intelConfirmed[tb.key]);
+      body+=`<div class="alert-box ab-e" style="margin-bottom:.75rem">⚠ <strong>Cannot execute.</strong> Please confirm all previous steps first. Missing: ${missing.map(m=>m.label).join(', ')}</div>`;
+      body+=`<div style="text-align:center;padding:2rem 0"><div style="font-size:2rem;margin-bottom:.5rem;opacity:.3">🔒</div><div style="font-size:.8125rem;font-weight:600;color:var(--txt2)">Complete all review steps to unlock execution</div><div style="font-size:.6875rem;color:var(--txt2);margin-top:.25rem">${progress} of ${tabs.length-1} steps confirmed</div></div>`;
+    }else{
+      body+=`<div class="alert-box ab-s" style="margin-bottom:.75rem">✓ <strong>All checks passed.</strong> All ${tabs.length-1} review steps have been confirmed. Ready to execute.</div>`;
+      body+=`<div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">G</div><div class="card-t">Execution Controls</div></div></div><div class="card-b"><div class="g2"><div><div style="font-size:.5625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px">Scheduled Start</div><div class="g2"><div><label style="font-size:.5625rem;color:var(--txt2)">Date</label><input type="date" value="2026-04-07" style="width:100%;padding:4px 6px;border:1px solid #dddbda;border-radius:var(--r);font-size:.75rem;font-family:inherit"></div><div><label style="font-size:.5625rem;color:var(--txt2)">Time</label><input type="time" value="09:00" style="width:100%;padding:4px 6px;border:1px solid #dddbda;border-radius:var(--r);font-size:.75rem;font-family:inherit"></div></div></div><div><div style="font-size:.5625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px">Throttling</div><div style="padding:.5rem;background:#fafafb;border:1px solid #f0f0f0;border-radius:var(--r)"><div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:.625rem"><span>Speed</span><span style="font-weight:700;color:var(--ex)">75%</span></div><input type="range" min="10" max="100" value="75" style="width:100%"></div></div></div></div></div>`;
+      body+=`<div class="af"><div><div style="font-weight:600;font-size:.75rem">Ready to execute?</div><div style="font-size:.625rem;color:var(--txt2)">${valid.toLocaleString()} contacts · ${actions.toLocaleString()} actions · ${cost} est. cost</div></div><div style="display:flex;gap:.375rem"><button class="btn" onclick="go('exDash')">Cancel</button><button class="btn btn-ex" onclick="openDryRun()">👁 Dry Run</button><button class="btn btn-success" onclick="toast('Execution submitted successfully!','s');setTimeout(()=>go('monitor'),600)">▶ Execute</button></div></div>`;
+    }
+  }
+
+  let navBtns='';
+  if(t>0){navBtns+=`<button class="btn" onclick="goIntelTab(${t-1})">← ${tabs[t-1].label}</button>`;}
+  if(t<tabs.length-1&&S.intelConfirmed[curKey]){navBtns+=`<button class="btn btn-brand" style="margin-left:auto" onclick="goIntelTab(${t+1})">${tabs[t+1].label} →</button>`;}
+
+  return`<div style="max-width:72rem;margin:0 auto">
+  <div class="intel-hero"><div style="width:32px;height:32px;border-radius:6px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.875rem;font-weight:800;flex-shrink:0">X</div><div><div style="font-weight:700;font-size:.8125rem">Pre-Execution Intelligence Summary</div><div style="font-size:.625rem;opacity:.8">Exotel · Mandatory review gate before execution${isSingle?' · Single-contact mode':''}</div></div></div>
+  ${progressBar}${tabBar}${body}
+  ${navBtns?`<div style="display:flex;margin-top:.75rem">${navBtns}</div>`:''}
+  </div>`;
 }
 
 /* ═══ TYPE CARD SELECTION ═══ */
