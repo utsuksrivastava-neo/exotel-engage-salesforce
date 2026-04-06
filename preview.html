@@ -279,6 +279,10 @@ const D={
     {id:'BJ-2026-04-0923',name:'Upsell Premium Plan',channels:['SMS','WhatsApp','IVR/Voicebot'],status:'Ready',desc:'Upgrade nudge with automated follow-up call'},
     {id:'BJ-2026-04-1001',name:'Payment Reminder',channels:['WhatsApp','SMS','IVR/Voicebot','Agent Call'],status:'Ready',desc:'Escalating reminder: message → bot → live agent'},
     {id:'BJ-2026-04-1055',name:'Re-engagement Campaign',channels:['Email','WhatsApp','SMS'],status:'Ready',desc:'Win-back inactive contacts'}
+  ],
+  activeExecs:[
+    {journeyId:'BJ-2026-04-0847',name:'Q2 Collections Campaign',status:'Running',progress:62,contacts:108500,started:'Apr 6, 2026 06:00',contactIds:['C001','C002','C004','C006','C008','C010']},
+    {journeyId:'BJ-2026-04-1001',name:'Payment Reminder',status:'Running',progress:34,contacts:32100,started:'Apr 6, 2026 08:15',contactIds:['C001','C003','C004','C007','C009']}
   ]
 };
 
@@ -637,6 +641,55 @@ function sourceHTML(){
   </div></div></div>`;
 }
 
+function preExecChecksHTML(j,ctx){
+  const jid=j.id;
+  const dupeExecs=D.activeExecs.filter(e=>e.journeyId===jid);
+  const isSingle=ctx.type==='single';
+
+  let dupeContacts=[];
+  if(isSingle&&ctx.contactObj){
+    dupeContacts=D.activeExecs.filter(e=>e.contactIds.includes(ctx.source)).map(e=>({exec:e,contactId:ctx.source,contactName:ctx.name}));
+  }else if(ctx.type==='list'){
+    const selIds=[...S.sel];
+    D.activeExecs.forEach(e=>{
+      selIds.forEach(cid=>{if(e.contactIds.includes(cid)){const c=D.contacts.find(x=>x.id===cid);dupeContacts.push({exec:e,contactId:cid,contactName:c?full(c):cid});}});
+    });
+  }else if(ctx.type!=='single'){
+    D.activeExecs.forEach(e=>{
+      e.contactIds.slice(0,3).forEach(cid=>{const c=D.contacts.find(x=>x.id===cid);if(c)dupeContacts.push({exec:e,contactId:cid,contactName:full(c)});});
+    });
+  }
+
+  const hasIssues=dupeExecs.length>0||dupeContacts.length>0;
+  if(!hasIssues)return`<div class="card" style="border:2px solid var(--success)"><div class="card-h" style="background:#f0fff4"><div class="card-ht"><div class="card-hi" style="background:var(--success);color:#fff">✓</div><div><div class="card-t" style="color:var(--success)">Pre-Execution Checks Passed</div></div></div><span class="badge badge-s">All Clear</span></div><div class="card-b" style="padding:.5rem .75rem"><div style="font-size:.6875rem;color:var(--success)">No active executions found for this journey. No duplicate contacts detected. Safe to proceed.</div></div></div>`;
+
+  let html=`<div class="card" style="border:2px solid ${dupeExecs.length?'var(--err)':'var(--warn)'}"><div class="card-h" style="background:${dupeExecs.length?'#fdd':'#fef0cd'}"><div class="card-ht"><div class="card-hi" style="background:${dupeExecs.length?'var(--err)':'var(--warn)'};color:#fff">⚠</div><div><div class="card-t" style="color:${dupeExecs.length?'#8e030f':'#8c4b02'}">Pre-Execution Checks — Issues Found</div><div class="card-st">Review before proceeding</div></div></div><span class="badge ${dupeExecs.length?'badge-e':'badge-w'}">${dupeExecs.length+dupeContacts.length} issue${(dupeExecs.length+dupeContacts.length)>1?'s':''}</span></div><div class="card-b">`;
+
+  if(dupeExecs.length>0){
+    html+=`<div style="margin-bottom:.75rem"><div style="font-size:.625rem;font-weight:700;color:#8e030f;text-transform:uppercase;letter-spacing:.03em;margin-bottom:.375rem;display:flex;align-items:center;gap:.25rem"><span class="dot" style="background:var(--err)"></span> Active Executions for Same Journey (${dupeExecs.length})</div>`;
+    html+=`<div class="alert-box ab-e" style="margin:0 0 .5rem">⚠ <strong>This journey already has ${dupeExecs.length} active execution${dupeExecs.length>1?'s':''}.</strong> Running another may cause duplicate messages to contacts.</div>`;
+    dupeExecs.forEach(e=>{
+      html+=`<div style="display:flex;align-items:center;gap:.5rem;padding:.5rem;border:1px solid #fbb;border-radius:var(--r);background:#fff5f5;margin-bottom:.375rem"><div class="si" style="background:#fdd;color:var(--err)">▶</div><div style="flex:1"><div style="font-size:.75rem;font-weight:600">${e.name}</div><div style="font-size:.5625rem;color:var(--txt2)">${e.contacts.toLocaleString()} contacts · Started ${e.started}</div></div><div style="text-align:right"><div style="font-size:.5625rem;color:var(--txt2)">Progress</div><div style="font-size:.75rem;font-weight:700;color:var(--err)">${e.progress}%</div></div><span class="badge badge-e" style="font-size:.5rem">${e.status}</span></div>`;
+    });
+    html+=`</div>`;
+  }
+
+  if(dupeContacts.length>0){
+    const unique=[...new Map(dupeContacts.map(d=>[d.contactId,d])).values()];
+    html+=`<div><div style="font-size:.625rem;font-weight:700;color:#8c4b02;text-transform:uppercase;letter-spacing:.03em;margin-bottom:.375rem;display:flex;align-items:center;gap:.25rem"><span class="dot" style="background:var(--warn)"></span> Duplicate Contacts in Active Executions (${unique.length})</div>`;
+    html+=`<div class="alert-box ab-w" style="margin:0 0 .5rem">⚠ <strong>${unique.length} contact${unique.length>1?'s':''}</strong> in your audience ${unique.length>1?'are':'is'} already being processed in another active execution. These contacts may receive duplicate communications.</div>`;
+    html+=`<table class="tbl"><thead><tr><th>Contact</th><th>Active In</th><th>Status</th><th style="text-align:center">Action</th></tr></thead><tbody>`;
+    dupeContacts.forEach(d=>{
+      html+=`<tr><td style="font-weight:600">${d.contactName}</td><td style="font-size:.625rem">${d.exec.name}</td><td><span class="badge badge-w" style="font-size:.5rem">${d.exec.status} (${d.exec.progress}%)</span></td><td style="text-align:center"><button class="btn btn-sm" onclick="toast('${d.contactName} will be skipped','s');this.closest('tr').style.opacity='.4';this.textContent='Skipping';this.disabled=true" style="font-size:.5625rem">Skip</button></td></tr>`;
+    });
+    html+=`</tbody></table></div>`;
+  }
+
+  html+=`<div style="display:flex;gap:.375rem;margin-top:.625rem;padding-top:.625rem;border-top:1px solid #f0f0f0"><button class="btn btn-sm" onclick="toast('Proceeding — duplicates will be auto-handled','w')">Proceed Anyway</button><button class="btn btn-sm btn-ex" onclick="document.querySelectorAll('.card-b table .btn:not(:disabled)').forEach(b=>b.click());toast('All duplicates marked for skip','s')">Skip All Duplicates</button></div>`;
+  html+=`</div></div>`;
+  return html;
+}
+
 function intelHTML(){
   const ctx=S.ctx;
   const j=D.journeys.find(x=>x.id===S.selJourney)||D.journeys[0];
@@ -648,6 +701,7 @@ function intelHTML(){
 
   return`<div style="max-width:72rem;margin:0 auto">
   <div class="intel-hero"><div style="width:32px;height:32px;border-radius:6px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.875rem;font-weight:800;flex-shrink:0">X</div><div><div style="font-weight:700;font-size:.8125rem">Pre-Execution Intelligence Summary</div><div style="font-size:.625rem;opacity:.8">Exotel · Mandatory review gate before execution${isSingle?' · Single-contact mode':''}</div></div></div>
+  ${preExecChecksHTML(j,ctx)}
   <div class="g2">
     <div class="card"><div class="card-h"><div class="card-ht"><div class="card-hi" style="background:var(--ex-bg);color:var(--ex)">A</div><div class="card-t">Audience Summary</div></div></div><div class="card-b"><div class="g2" style="margin-bottom:.5rem"><div class="im"><div class="im-l">Total Records</div><div class="im-v">${total.toLocaleString()}</div></div><div class="im" style="background:#caf1d8"><div class="im-l" style="color:#194e31">Valid Contacts</div><div class="im-v" style="color:#194e31">${valid.toLocaleString()}</div></div>${!isSingle?`<div class="im" style="background:#fdd"><div class="im-l" style="color:#8e030f">Invalid</div><div class="im-v" style="color:#8e030f">${Math.round(total*0.052).toLocaleString()}</div></div><div class="im" style="background:#fef0cd"><div class="im-l" style="color:#8c4b02">Deduplicated</div><div class="im-v" style="color:#8c4b02">${Math.round(total*0.062).toLocaleString()}</div></div>`:''}</div>
     <div style="font-size:.5625rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em;margin:6px 0 3px">Channel Availability</div>
